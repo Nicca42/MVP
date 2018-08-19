@@ -1,5 +1,7 @@
 pragma solidity 0.4.24;
 
+import "./User.sol";
+
 contract UserFactory {
     mapping (address => string) public allUsers;
     address[] public usersAddresses;
@@ -43,12 +45,10 @@ contract UserFactory {
             if(usersAddresses[i] == _contractAddress) {
                 delete usersAddresses[i];
                 delete usersNames[i];
-            }
-            if(i == usersAddresses.length - 1) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
     
     // function deteteFactory() 
@@ -58,32 +58,4 @@ contract UserFactory {
     //     //loop through all users and call their respective selfdestruct functions,
     //     //sending all Eth/views value to the owners of the user contracts. 
     // }
-}
-
-contract User {
-    UserFactory uf;
-    address public owner;
-    string public userName;
-    uint public joinedDate;
-    uint daoKey;
-    
-    constructor(address _user, uint _joinedDate, string _userName, UserFactory _uf) 
-    public {
-        owner = _user;
-        joinedDate = _joinedDate;
-        userName = _userName;
-        uf = _uf;
-    }
-    
-    modifier isUser {
-        require(msg.sender == owner);
-        _;
-    }
-    
-    function deleteUser() 
-    isUser
-    returns(bool) {
-        require(uf.deleteUserFinal(this));
-        selfdestruct(owner);
-    }
 }
