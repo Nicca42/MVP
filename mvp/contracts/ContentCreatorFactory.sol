@@ -1,12 +1,12 @@
 pragma solidity 0.4.24;
 
-import "./ContentCreator";
+import "./ContentCreator.sol";
 
 contract ContentCreatorFactory {
     address owner;
     mapping (address => address) contentCreators; //ccc address to user address
     
-    constructor() {
+    constructor() public {
         owner = msg.sender;
     }
     
