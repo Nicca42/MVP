@@ -24,6 +24,8 @@ contract UserFactory {
         _;
     }
     
+    event LogCreatedUser(address _userAddress, address _contractAddress);
+
     function createUser(string _userName) 
     public 
     uniqueUserName(_userName)

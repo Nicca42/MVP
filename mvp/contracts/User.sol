@@ -22,11 +22,18 @@ contract User {
         _;
     }
     
-    function deleteUser() 
+    function deleteUser() public
     isUser
     returns(bool) {
         require(uf.deleteUserFinal(this));
         selfdestruct(owner);
+        return true;
+    }
+
+    function becomeContentCreator() public
+    isUser
+    returns(bool) {
+        // ContentCreatorFactory.createNewCC(this);
         return true;
     }
 }
