@@ -1,15 +1,19 @@
 pragma solidity 0.4.24;
 
 import "./User.sol";
+import "./DataStorage.sol";
 
 contract UserFactory {
+    DataStorage dataStorage;
     mapping (address => string) public allUsers;
+    dataStorage.getAllUsers;
     address[] public usersAddresses;
     string[] public usersNames;
     address owner;
     
-    constructor() public {
+    constructor(DataStorage _ds) public {
         owner == msg.sender;
+        dataStorage = _ds;
     }
     
     modifier onlyOwner {

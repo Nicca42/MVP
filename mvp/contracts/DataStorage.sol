@@ -6,6 +6,7 @@ import "./LoveMachine.sol";
 
 contract DataStorage {
     address public owner;
+    
     address public userFactoryAddress;
     UserFactory uf;
     address public creatorFactoryAddress;
@@ -102,23 +103,18 @@ contract DataStorage {
         owner = msg.sender;    
     }
     
+    
     function setUpDataContracts(
         address _userFactoryAddress, 
-        UserFactory _uf, 
         address _creatorFactory,
-        ContentCreatorFactory _ccf,
-        address _minter,
-        Minter _m)
+        address _minter)
         public
         onlyOwner neverInEmergency
         returns(bool)
     {
-        userFactoryAddress = _userFactoryAddress;
-        uf = _uf;
-        creatorFactoryAddress = _creatorFactory;
-        ccf = _ccf;
-        minter = _minter;
-        m = _m;
+        uf = UserFactory(_userFactoryAddress);
+        ccf = ContentCreatorFactory(_creatorFactory);
+        m = LoveMachine(_minter);
         
         setPause(false);
         
