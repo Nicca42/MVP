@@ -6,42 +6,40 @@ import "./LoveMachine.sol";
 
 contract DataStorage {
     address public owner;
-    
-    address public userFactoryAddress;
+
     UserFactory uf;
-    address public creatorFactoryAddress;
     ContentCreatorFactory ccf;
-    address public minter;
     LoveMachine m;
     
-    mapping (address => uint) public allUsers; //user contract address to views
-    mapping (address => uint) public allCreators;//creator contract address to views
+    mapping (address => uint) public allUsers; //userContract to views
+    mapping (address => uint) public UsersTotalViewPurchases;//userContract to total views bought
+    mapping (address => uint) public allCreators;//creatorContract to views
     mapping (address => string) public allUserNames;//user contract address to userName
-    mapping (address => address) public userContractOwners;//user add to userContract add
+    mapping (address => address) public userContractOwners;//userContract add to user add ress
     mapping (address => address) public creatorsContractOwners;//userContract to creatorContract
     address[] public usersAddresses;//contract addresses
     address[] public creatorsAddresses;//creators contract addresses
     string[] public usersNames;//userNames
+    struct content {
+        address creator,
+        uint contentLocationIPFS,
+        string title,
+        string description,
+        uint views
+    }
+     mapping (address => content[]) public CreatorContent;//ccc to array of content
     
     bool public emergencyStop = false;
     bool public pause = true;
     
     event LogEmergency(bool _emergency);
-    
     event LogPause(bool _pause);
-    
     event LogSetUp(address _userFactoryAddress, address _creatorFactoryAddress, address _minterAddress);
-    
     event LogBoughtViewsUser(address _account, uint _amount);
-    
     event LogUsedViewsUser(address _account, uint _amount);
-    
     event LogUserCreated(address _owner, address _userContract, string _userName);
-    
     event LogUserDeleted(address _owner, address _userContract, string _userName);
-    
     event LogCreatorCreated(address _userCOwner, address _creatorContract);
-    
     event LogCreatorDeleted(address _userContract, address _creatorContract);
     
     modifier onlyInEmergency {
@@ -103,7 +101,41 @@ contract DataStorage {
         owner = msg.sender;    
     }
     
-    
+    function getAllUserAddresses() 
+        public 
+        returns(address[])
+    {
+        return usersAddresses;
+    }
+
+    function getAllCreatorsAddresses() 
+        public 
+        returns(address[])
+    {
+        return creatorsAddresses;
+    }
+
+    function getAllUsersNames() 
+        public 
+        returns(string[])
+    {
+        return usersNames;
+    }
+
+    function getAUsersOwnerData(address _contractAddress)
+    public
+    returns(address _owner, string _userName)
+    {
+        return(userContractOwners[_contractAddress]);
+    }
+
+    function getAUsersNameData(address _contractAddress)
+        public
+        returns(string _userName)
+    {
+        return(allUserNames[_contractAddress]);
+    }
+
     function setUpDataContracts(
         address _userFactoryAddress, 
         address _creatorFactory,
@@ -150,7 +182,7 @@ contract DataStorage {
     {
         allUsers[_userContract] = 0;
         allUserNames[_userContract] = _userName;
-        userContractOwners[_user] = _userContract;
+        userContractOwners[_userContract] = _user;
         usersAddresses.push(_userContract);
         usersNames.push(_userName);
         
@@ -190,7 +222,7 @@ contract DataStorage {
     {
         delete allUsers[_userContract];
         delete allUserNames[_userContract];
-        delete userContractOwners[_user];
+        delete userContractOwners[_userContract];
         for(uint i = 0; i < usersAddresses.length; i++) {
             if(usersAddresses[i] == _userContract) {
                 delete usersAddresses[i];
@@ -221,6 +253,24 @@ contract DataStorage {
         emit LogCreatorCreated(_userContract, _creatorContract);
         
         return true;
+    }
+
+    function createContent(address _contentCreatorContract, uint addressIPFS, string title, string description)
+        public
+        onlyMinter(1)
+    {
+        //in the ContentCreator contract the minter is called and paid for the creation
+        //the minter then calls this function to compleate the creation of the content
+        
+        /**
+        struct content {
+        address creator,
+        uint contentLocationIPFS,
+        string title,
+        string description,
+        uint views
+    }
+         */
     }
     
     function removeCreatorData(address _userContract, address _creatorContract) 

@@ -9,12 +9,12 @@ contract User {
     uint public joinedDate;
     uint daoKey;
     
-    constructor(address _user, uint _joinedDate, string _userName, UserFactory _uf) 
+    constructor(address _user, uint _joinedDate, string _userName, address _userFactory) 
     public {
         owner = _user;
         joinedDate = _joinedDate;
         userName = _userName;
-        uf = _uf;
+        uf = UserFactory(_userFactory);
     }
     
     modifier isUser {

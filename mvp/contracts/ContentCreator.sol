@@ -1,17 +1,16 @@
 pragma solidity 0.4.24;
 
-contract ContentCreator {
+import "./User.sol";
+
+contract ContentCreator is User {
     address owner;
     address userContract;
     uint[] keysToContent; //v1 hashes of content in ipfs
-     uint totalViewsToWithdraw;
-    uint totalWithdrawnViews;
-    uint totalViewsAccumulated;
    
-   modifier isUser { 
-           require(msg.sender == owner);
-           _;
-       }
+    modifier isUser { 
+        require(msg.sender == owner);
+        _;
+    }
    
     constructor(address _UserContractAddress) 
     public {

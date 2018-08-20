@@ -4,18 +4,22 @@ import "./ContentCreator.sol";
 
 contract ContentCreatorFactory {
     address owner;
-    mapping (address => address) contentCreators; //ccc address to user address
+    DataStorage ds;
     
-    constructor() public {
+    constructor(address _dataStorage) 
+        public 
+    {
         owner = msg.sender;
+        ds = DataStorage(_dataStorage);
     }
     
     function createContentCreator()
-    public 
-    payable
-    returns(bool) {
-        ContentCreator ccc = new ContentCreator(msg.sender);
-        contentCreators[ccc] = msg.sender;
+        public 
+        payable
+        returns(bool) 
+    {
+        address ccc = new ContentCreator(msg.sender);
+        dataStorage.setNewCreatorData(msg.sender, ccc); 
         
     }
 }
