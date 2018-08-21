@@ -31,6 +31,7 @@ contract User {
     }
 
     function becomeContentCreator() public
+    payable
     isUser
     returns(bool) {
         // ContentCreatorFactory.createNewCC(this);

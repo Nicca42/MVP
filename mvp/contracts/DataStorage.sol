@@ -6,10 +6,12 @@ import "./LoveMachine.sol";
 
 contract DataStorage {
     address public owner;
+    address private registry;
 
     UserFactory uf;
     ContentCreatorFactory ccf;
     LoveMachine m;
+    Registry r;
     
     mapping (address => uint) public allUsers; //userContract to views
     mapping (address => uint) public UsersTotalViewPurchases;//userContract to total views bought
@@ -20,14 +22,15 @@ contract DataStorage {
     address[] public usersAddresses;//contract addresses
     address[] public creatorsAddresses;//creators contract addresses
     string[] public usersNames;//userNames
-    struct content {
-        address creator,
-        uint contentLocationIPFS,
-        string title,
-        string description,
-        uint views
+    struct Content {
+        address creator;
+        uint contentLocationIPFS;
+        string title;
+        string description;
+        uint views;
     }
-     mapping (address => content[]) public CreatorContent;//ccc to array of content
+    Content[] public allContent;
+    mapping (address => content[]) public CreatorContent;//ccc to array of content
     
     bool public emergencyStop = false;
     bool public pause = true;
@@ -41,6 +44,7 @@ contract DataStorage {
     event LogUserDeleted(address _owner, address _userContract, string _userName);
     event LogCreatorCreated(address _userCOwner, address _creatorContract);
     event LogCreatorDeleted(address _userContract, address _creatorContract);
+    event LogContentCreated(uint indexed _position, string indexed _title, address indexed _creator);
     
     modifier onlyInEmergency {
         require(emergencyStop);
@@ -94,11 +98,31 @@ contract DataStorage {
         require(allCreators[_creatorContract] == 0);
         _;
     }
+
+    modifier onlyRegistry() {
+        require(msg.sender == registry);
+    }
     
     constructor()
         public
     {
         owner = msg.sender;    
+        address _userFactory = new UserFactory(this, owner);
+        address _contentCreatorFactory = new ContentCreatorFactory(this, owner);
+        address _minter = new LoveMachine(this, owner);
+        address _registry = new Register(
+            _userFactoryAddress,
+            _contentCreatorFactory,
+            _minter,
+            owner,
+            this
+        );
+        this.setUpDataContracts(
+            _userFactory,
+            _contentCreatorFactory,
+            _minter,
+            _registry
+        );
     }
     
     function getAllUserAddresses() 
@@ -122,9 +146,16 @@ contract DataStorage {
         return usersNames;
     }
 
+    function registryUpdateContractState(address _newUserFactory)
+    public
+    onlyRegistry
+    {
+
+    }
+
     function getAUsersOwnerData(address _contractAddress)
     public
-    returns(address _owner, string _userName)
+    returns(address _owner)
     {
         return(userContractOwners[_contractAddress]);
     }
@@ -139,14 +170,18 @@ contract DataStorage {
     function setUpDataContracts(
         address _userFactoryAddress, 
         address _creatorFactory,
-        address _minter)
+        address _minter
+        address _registry
+        )
         public
-        onlyOwner neverInEmergency
+        onlyOwner 
+        neverInEmergency
         returns(bool)
     {
         uf = UserFactory(_userFactoryAddress);
         ccf = ContentCreatorFactory(_creatorFactory);
         m = LoveMachine(_minter);
+        r = Registry(_registry);
         
         setPause(false);
         
@@ -177,8 +212,10 @@ contract DataStorage {
     
     function setNewUserData(address _user, address _userContract, string _userName)
         public 
-        onlyUserFactory neverInEmergency uniqueUserName(_userName) pauseFunction
-        returns(bool)
+        onlyUserFactory 
+        neverInEmergency 
+        uniqueUserName(_userName) 
+        pauseFunction
     {
         allUsers[_userContract] = 0;
         allUserNames[_userContract] = _userName;
@@ -187,8 +224,6 @@ contract DataStorage {
         usersNames.push(_userName);
         
         emit LogUserCreated(_user, _userContract, _userName);
-        
-        return true;
     }
     
     function boughtViews(address _userContract, uint _amount)
@@ -255,22 +290,37 @@ contract DataStorage {
         return true;
     }
 
-    function createContent(address _contentCreatorContract, uint addressIPFS, string title, string description)
+    function createContent(
+        address _contentCreatorContract, 
+        uint _addressIPFS, 
+        string _title, 
+        string _description
+        )
         public
         onlyMinter(1)
     {
         //in the ContentCreator contract the minter is called and paid for the creation
         //the minter then calls this function to compleate the creation of the content
-        
-        /**
-        struct content {
-        address creator,
-        uint contentLocationIPFS,
-        string title,
-        string description,
-        uint views
-    }
-         */
+
+        //for front end to have access to lates and all content
+        allContent.push(Content(
+            {
+                creator: _contentCreatorContract,
+                contentLocationIPFS: _addressIPFS,
+                title: _title,
+                description: _description,
+                views: 0
+            })); 
+            emit LogContentCreated(allContent.length, _title, _contentCreatorContract);
+        //For the indervidual conent creators to be able to claim ownership of content
+        CreatorContent[_contentCreatorContract] = content.push(Content(
+            {
+            creator: _contentCreatorContract,
+                contentLocationIPFS: _addressIPFS,
+                title: _title,
+                description: _description,
+                views: 0
+            }));
     }
     
     function removeCreatorData(address _userContract, address _creatorContract) 
@@ -291,4 +341,11 @@ contract DataStorage {
         
         return true;
     }
+
+    //TODO: function isCreator(address _userContract) onlyMinter returns(bool)
+            //determins whether a user address is a creator address
+            //needs to have near identical modifer onlyCreator
+
+    //TODO: function getCreatorAddressFromUser(address _userContract) onlyMinter onlyCreator(address) returns(address)
+            //returns the creators addres from the user 
 }

@@ -1,15 +1,18 @@
 pragma solidity 0.4.24;
 
-import "./User.sol";
 import "./DataStorage.sol";
+import "./Register.sol";
+import "./User.sol";
 
 contract UserFactory {
     DataStorage dataStorage;
+    Register register;
     address dataStorageAddress; 
+    address registerAddress;
     address owner;
 
     bool public emergencyStop = false;
-    bool public pause = true;
+    bool public pause = false;
 
     event LogCreatedUser(address _userAddress, address _contractAddress);
     
@@ -18,7 +21,7 @@ contract UserFactory {
         _;
     }
     
-    modifier neverInEmergency {
+    modifier stopInEmergency {
         require(!emergencyStop);
         _;
     }
@@ -33,6 +36,11 @@ contract UserFactory {
         require(msg.sender == owner);
         _;
     }
+
+    modifier ownerOrRegister {
+        require(msg.sender == owner || msg.sender == registerAddress);
+        _;
+    }
     
     modifier uniqueUserName(string _userName) {
         string[] memory allUserNames = dataStorage.getAllUsersNames();
@@ -42,14 +50,21 @@ contract UserFactory {
         _;
     }
 
-    constructor(address _dataStorageAddress) public {
-        owner == msg.sender;
-        dataStorage = DataStorage(_dataStorageAddress);
+    constructor(address _dataStorage, address _owner, address _register) 
+        public 
+    {
+        owner = _owner;
+        dataStorageAddress = _dataStorage;
+        registerAddress = _register;
+        dataStorage = DataStorage(_dataStorage);
+        register = Register(_register);
     }
 
     function createUser(string _userName) 
         public 
         uniqueUserName(_userName)
+        stopInEmergency
+        pauseFunction
         returns(address userContractAdd) 
     {
         address newUser = new User(msg.sender, now, _userName, this);
@@ -60,6 +75,8 @@ contract UserFactory {
     
     function deleteUserFinal(address _contractAddress)
         public 
+        stopInEmergency
+        pauseFunction
         returns(bool) 
     {
         require(msg.sender == _contractAddress);
@@ -72,5 +89,17 @@ contract UserFactory {
             _contractAddress,
             dataStorage.getAUsersNameData(_contractAddress));
         return true;
+    }
+
+    function kill(address _minter) 
+        public 
+        ownerOrRegister 
+    {
+        selfdestruct(_minter);
+        //v2 could just have a 
+        //bool death private;
+        //that needs 
+        //to be false and when its set to true the contract 
+        //is dead.
     }
 }
