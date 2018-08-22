@@ -8,6 +8,7 @@ import "./User.sol";
 contract UserFactory {
     DataStorage dataStorage;
     Register register;
+    ContentCreatorFactory ccFactory;
     address dataStorageAddress; 
     address registerAddress;
     address owner;
@@ -29,7 +30,7 @@ contract UserFactory {
     
     modifier pauseFunction {
         require(!pause);
-        require(!dataStorage.getPause());
+        require(!dataStorage.pause());
         _;
     }
 
@@ -39,7 +40,7 @@ contract UserFactory {
     }
 
     modifier ownerOrRegister {
-        require(msg.sender == owner || msg.sender == dataStorage.registerAddress);
+        require(msg.sender == owner || msg.sender == dataStorage.registryAddress());
         _;
     }
     
@@ -67,7 +68,7 @@ contract UserFactory {
         pauseFunction
         returns(address userContractAdd) 
     {
-        address newUser = new User(msg.sender, now, _userName, this, );
+        address newUser = new User(msg.sender, now, _userName, this, dataStorage.ccFactoryAddress());
         dataStorage.setNewUserData(msg.sender, newUser, _userName);
         
         return newUser;
@@ -80,7 +81,8 @@ contract UserFactory {
         returns(bool) 
     {
         require(msg.sender == _contractAddress);
-        require(keccak256(dataStorage.allUserNames[_contractAddress]) != keccak256(""));
+        string memory _userName = dataStorage.getAUsersName(_contractAddress);
+        require(keccak256(_userName) != keccak256(""));
         
         //TODO: call minter to send remaining views to contract creator
 

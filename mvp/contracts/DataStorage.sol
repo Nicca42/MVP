@@ -1,22 +1,23 @@
 pragma solidity 0.4.24;
+pragma experimental ABIEncoderV2;
 
 import "./UserFactory.sol";
 import "./ContentCreatorFactory.sol";
 import "./LoveMachine.sol";
+import "./Register.sol";
 
 contract DataStorage {
     address public owner;
-    address public registry;
 
     UserFactory uf;
     ContentCreatorFactory ccf;
     LoveMachine m;
-    Registry registry;
+    Register registry;
 
-    address userFactoryAddress;
-    address ccFactoryAddress;
-    address minterAddress;
-    address registryAddress;
+    address public userFactoryAddress;
+    address public ccFactoryAddress;
+    address public minterAddress;
+    address public registryAddress;
     
     mapping (address => uint) public allUsers; //userContract to views
     mapping (address => uint) public UsersTotalViewPurchases;//userContract to total views bought
@@ -35,7 +36,8 @@ contract DataStorage {
         uint views;
     }
     Content[] public allContent;
-    mapping (address => content[]) public CreatorContent;//ccc to array of content
+    mapping (address => Content[]) public creatorContent;//ccc to array of content
+    uint private totalViewCreated;
     
     bool public emergencyStop = false;
     bool public pause = true;
@@ -56,7 +58,7 @@ contract DataStorage {
         _;
     }
     
-    modifier neverInEmergency {
+    modifier stopInEmergency {
         require(!emergencyStop);
         _;
     }
@@ -77,12 +79,12 @@ contract DataStorage {
     }
     
     modifier onlyCreatorFactory {
-        require(msg.sender == creatorFactoryAddress);
+        require(msg.sender == ccFactoryAddress);
         _;
     }
     
     modifier onlyMinter(uint _amount) {
-        require(msg.sender == minter);
+        require(msg.sender == minterAddress);
         require(_amount > 0);
         _;
     }
@@ -105,16 +107,13 @@ contract DataStorage {
     }
 
     modifier onlyRegistry {
-        require(msg.sender == registry);
+        require(msg.sender == registryAddress);
+        _;
     }
     
     constructor()
         public
     {
-        /**UserFactory uf;
-    ContentCreatorFactory ccf;
-    LoveMachine m;
-    Registry registry; */
         owner = msg.sender;    
         address _contentCreatorFactory = new ContentCreatorFactory(this, owner);
         ccFactoryAddress = _contentCreatorFactory;
@@ -126,7 +125,7 @@ contract DataStorage {
         minterAddress = _minter;
 
         address _registry = new Register(
-            _userFactoryAddress,
+            _userFactory,
             _contentCreatorFactory,
             _minter,
             owner,
@@ -165,6 +164,43 @@ contract DataStorage {
     {
         return usersNames;
     }
+    
+    function getAUsersName(address _user)
+        public
+        view
+        
+        returns(string)    
+    {
+        return(allUserNames[_user]);
+    }
+    
+    function isCreator(address _userAddress)
+        public
+        returns(bool)
+    {
+        if(creatorsContractOwners[_userAddress] != 0) {
+            return true;
+        }
+        return false;
+    }
+    
+    function isUser(address _userAddress)
+        public
+        returns(bool)
+    {
+        if(userContractOwners[_userAddress] != 0) {
+            return true;
+        }
+        return false;
+    }
+    
+    function getCreatorAddressFromUser(address _userAddress)
+        public
+        returns(address)
+    {
+        require(creatorsContractOwners[_userAddress] != 0);
+        return creatorsContractOwners[_userAddress];
+    }
 
     function registryUpdateUserFactory(address _newUserFactory)
     public
@@ -187,22 +223,30 @@ contract DataStorage {
     {
         return(allUserNames[_contractAddress]);
     }
-
+    
+    function setTotalViewsDispenced(address _user, uint _amount) 
+        public 
+        onlyMinter(_amount)
+    {
+        UsersTotalViewPurchases[_user] += _amount;
+        totalViewCreated += _amount;
+    }
+        
     function setUpDataContracts(
         address _userFactoryAddress, 
         address _creatorFactory,
-        address _minter
+        address _minter,
         address _registry
         )
         public
         onlyOwner 
-        neverInEmergency
+        stopInEmergency
         returns(bool)
     {
         ccf = ContentCreatorFactory(_creatorFactory);
         uf = UserFactory(_userFactoryAddress);
         m = LoveMachine(_minter);
-        registry = Registry(_registry);
+        registry = Register(_registry);
         
         setPause(false);
         
@@ -234,8 +278,8 @@ contract DataStorage {
     function setNewUserData(address _user, address _userContract, string _userName)
         public 
         onlyUserFactory 
-        neverInEmergency 
         uniqueUserName(_userName) 
+        stopInEmergency
         pauseFunction
     {
         allUsers[_userContract] = 0;
@@ -250,7 +294,7 @@ contract DataStorage {
     function boughtViews(address _userContract, uint _amount)
         public 
         onlyMinter(_amount) 
-        neverInEmergency 
+        stopInEmergency 
         pauseFunction
         returns(bool)
     {
@@ -263,7 +307,9 @@ contract DataStorage {
     
     function usedViews(address _userContract, uint _amount)
         public 
-        onlyMinter(_amount) neverInEmergency pauseFunction
+        onlyMinter(_amount) 
+        stopInEmergency 
+        pauseFunction
         returns(bool)
     {
         allUsers[_userContract] -= _amount;
@@ -275,7 +321,10 @@ contract DataStorage {
     
     function removeUserData(address _user, address _userContract, string _userName)
         public
-        onlyUserFactory neverInEmergency beforeDeleteChecksUser(_userContract) pauseFunction
+        onlyUserFactory 
+        beforeDeleteChecksUser(_userContract) 
+        stopInEmergency
+        pauseFunction
         returns(bool)
     {
         delete allUsers[_userContract];
@@ -301,7 +350,9 @@ contract DataStorage {
     
     function setNewCreatorData(address _userContract, address _creatorContract) 
         public 
-        onlyCreatorFactory neverInEmergency pauseFunction
+        onlyCreatorFactory 
+        stopInEmergency 
+        pauseFunction
         returns(bool)
     {
         allCreators[_creatorContract] = 0;
@@ -326,29 +377,31 @@ contract DataStorage {
         //the minter then calls this function to compleate the creation of the content
 
         //for front end to have access to lates and all content
-        allContent.push(Content(
-            {
-                creator: _contentCreatorContract,
-                contentLocationIPFS: _addressIPFS,
-                title: _title,
-                description: _description,
-                views: 0
-            })); 
-            emit LogContentCreated(allContent.length, _title, _contentCreatorContract);
-        //For the indervidual conent creators to be able to claim ownership of content
-        CreatorContent[_contentCreatorContract] = content.push(Content(
-            {
+        allContent.push(Content({
             creator: _contentCreatorContract,
-                contentLocationIPFS: _addressIPFS,
-                title: _title,
-                description: _description,
-                views: 0
-            }));
+            contentLocationIPFS: _addressIPFS,
+            title: _title,
+            description: _description,
+            views: 0
+        })); 
+        emit LogContentCreated(allContent.length, _title, _contentCreatorContract);
+        //For the indervidual conent creators to be able to claim ownership of content
+        Content[] storage temp = creatorContent[_contentCreatorContract];
+        temp.push(Content({
+            creator: _contentCreatorContract,
+            contentLocationIPFS: _addressIPFS,
+            title: _title,
+            description: _description,
+            views: 0
+        }));
     }
     
     function removeCreatorData(address _userContract, address _creatorContract) 
         public
-        onlyCreatorFactory neverInEmergency beforeDeleteChecksCreator(_creatorContract) pauseFunction
+        onlyCreatorFactory 
+        beforeDeleteChecksCreator(_creatorContract) 
+        stopInEmergency
+        pauseFunction
         returns(bool)
     {
         delete allCreators[_creatorContract];

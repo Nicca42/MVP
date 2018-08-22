@@ -11,18 +11,40 @@ contract User {
     uint public joinedDate;
     uint daoKey;
     
+    bool lock;
+    
     modifier isUser {
         require(msg.sender == owner);
         _;
     }
     
-    constructor(address _user, uint _joinedDate, string _userName, address _userFactory, address _ccFactory) 
-    public {
+    modifier checkLock {
+        require(!lock);
+        _;
+    }
+    
+    constructor(
+        address _user,
+        uint _joinedDate, 
+        string _userName, 
+        address _userFactory, 
+        address _ccFactory
+        ) 
+        public 
+    {
         owner = _user;
         joinedDate = _joinedDate;
         userName = _userName;
         uf = UserFactory(_userFactory);
         ccFactory = ContentCreatorFactory(_ccFactory);
+    }
+    
+    function getLock()
+        public
+        view
+        returns(bool)
+    {
+        return(lock);
     }
     
     function deleteUser() public

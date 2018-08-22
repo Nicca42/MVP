@@ -1,14 +1,15 @@
 pragma solidity 0.4.24;
 
 import "./User.sol";
+import "./Register.sol";
 import "./ContentCreatorFactory.sol";
 
 contract ContentCreator is User {
+    ContentCreatorFactory ccFactory;
+    User user;
     address owner;
     address userContract;
     address ccFactoryAddress;
-    ContentCreatorFactory ccf;
-    User user;
    
     modifier isUser { 
         require(msg.sender == owner);
@@ -17,12 +18,14 @@ contract ContentCreator is User {
 
     modifier onlyCCFactory {
         require(msg.sender == ccFactoryAddress);
+        _;
     }
 
-    modifer onlyAUser(address _user){
-        require(ccF.onlyAUser(_user));
+    modifier onlyAUser(address _user){
+        require(ccFactory.onlyAUser(_user));
+        _;
     }
-   
+    
     constructor(address _userContractAddress, address _contentCreatorFactory) 
         public 
         onlyAUser(msg.sender)
@@ -31,7 +34,7 @@ contract ContentCreator is User {
         userContract = _userContractAddress;
         ccFactoryAddress = _contentCreatorFactory;
         user = User(_userContractAddress);
-        ccf = ContentCreatorFactory(_contentCreatorFactory);
+        ccFactory = ContentCreatorFactory(_contentCreatorFactory);
     }
 
     //TODO: function to create contract 

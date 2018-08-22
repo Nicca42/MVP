@@ -16,13 +16,14 @@ contract ContentCreatorFactory {
 
     modifier onlyUsers(address _user) {
         bool pass = false;
-        address[] allUsers = dataStorage.getAllUserAddresses();
+        address[] memory allUsers = dataStorage.getAllUserAddresses();
         for(uint i = 0; i < allUsers.length; i++) {
             if(allUsers[i] == _user) {
                 pass = true;
             }
         }
         require(pass);
+        _;
     }
     
     modifier onlyInEmergency {
@@ -37,12 +38,12 @@ contract ContentCreatorFactory {
     
     modifier pauseFunction {
         require(!pause);
-        require(!dataStorage.getPause());
+        require(!dataStorage.pause());
         _;
     }
 
     modifier ownerOrRegister {
-        require(msg.sender == owner || msg.sender == dataStorage.registerAddress);
+        require(msg.sender == owner || msg.sender == dataStorage.registryAddress());
         _;
     }
 
@@ -59,7 +60,7 @@ contract ContentCreatorFactory {
         returns(bool)    
     {
         bool pass = false;
-        address[] allUsers = dataStorage.getAllUserAddresses();
+        address[] memory allUsers = dataStorage.getAllUserAddresses();
         for(uint i = 0; i < allUsers.length; i++) {
             if(allUsers[i] == _user) {
                 pass = true;
@@ -77,7 +78,7 @@ contract ContentCreatorFactory {
         returns(address) 
     {
         //need to call the minter to take care of values. 
-        address ccc = new ContentCreator(msg.sender);
+        address ccc = new ContentCreator(msg.sender, this);
         dataStorage.setNewCreatorData(msg.sender, ccc); 
         return ccc;
     }

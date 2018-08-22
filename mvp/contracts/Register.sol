@@ -23,6 +23,10 @@ contract Register {
     bool public pause = false;
 
     event LogNewUserFactory(address newContract, address oldContract);
+    event LogNewContract(
+        address _newContentCreatorFactory, 
+        address backendContentCreatorFactory
+    );
 
     modifier onlyInEmergency {
         require(emergencyStop);
@@ -36,7 +40,7 @@ contract Register {
     
     modifier pauseFunction {
         require(!pause);
-        require(!dataStorage.getPause());
+        require(!dataStorage.pause());
         _;
     }
 
@@ -49,13 +53,13 @@ contract Register {
         address _backendUserFactory, 
         address _backendContentCreatorFactory, 
         address _backendMinter, 
-        address _owner
+        address _owner,
         address _dataStorage
         ) 
         public 
     {
         owner == _owner;
-        ds = DataStorage(_dataStorage);
+        dataStorage = DataStorage(_dataStorage);
         backendUserFactory = _backendUserFactory;
         userFactory = UserFactory(_backendUserFactory);
         backendContentCreatorFactory = _backendContentCreatorFactory;
@@ -74,7 +78,7 @@ contract Register {
         if(_newUserFactory != backendUserFactory) {
             emit LogNewContract(_newUserFactory, backendUserFactory);
             previousUserFactories.push(backendUserFactory);
-            userFactory.kill(_backendMinter);
+            userFactory.kill(backendMinter);
             backendUserFactory = _newUserFactory;
             userFactory = UserFactory(backendUserFactory);
             return true;
@@ -89,12 +93,15 @@ contract Register {
         pauseFunction
         returns(bool) 
     {
-        if(_newContentCreatorFactory != _backendContentCreatorFactory) {
-            emit LogNewContract(_newContentCreatorFactory, backendContentCreatorFactory);
+        if(_newContentCreatorFactory != backendContentCreatorFactory) {
+            emit LogNewContract(
+                _newContentCreatorFactory, 
+                backendContentCreatorFactory
+            );
             previousContentCreatorFactories.push(backendUserFactory);
-            contentCreatorFactory.kill(_backendMinter);
+            ccFactory.kill(backendMinter);
             backendContentCreatorFactory = _newContentCreatorFactory;
-            contentCreatorFactory = ContentCreatorFactory(backendContentCreatorFactory);
+            ccFactory = ContentCreatorFactory(backendContentCreatorFactory);
             return true;
         }
         return false;
@@ -110,7 +117,7 @@ contract Register {
         if(_newMinter != backendMinter) {
             emit LogNewContract(_newMinter, backendMinter);
             previousMinters.push(backendMinter);
-            contentCreatorFactory.kill(_backendMinter);
+            ccFactory.kill(_newMinter);
             backendMinter = _newMinter;
             minter = LoveMachine(backendMinter);
             return true;
@@ -121,6 +128,6 @@ contract Register {
             //a new one in the data storage
     function kill(address _newRegister) {
         dataStorage.updateRegister(_newRegister);
-        selfdesctruct(owner);
+        selfdestruct(owner);
     }
 }

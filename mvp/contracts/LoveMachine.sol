@@ -7,6 +7,7 @@ import "./ContentCreator.sol";
 
 contract LoveMachine {
     DataStorage dataStorage;
+    User u;
     address owner;
 
     bool emergencyStop = false;
@@ -17,12 +18,12 @@ contract LoveMachine {
         _;
     }
 
-    modifier neverInEmergency() {
+    modifier stopInEmergency() {
         require(!emergencyStop);
         _;
     }
 
-    modifier pause {
+    modifier pauseModifier {
         require(!pause);
         _;
     }
@@ -33,23 +34,26 @@ contract LoveMachine {
      */
     modifier lockUser(address _user) {
         User u = User(_user);
-        reqire(!u.getLock);
-        if(dataStorage.isCreator) {
+        bool lock = u.getLock();
+        require(!lock);
+        if(dataStorage.isCreator(_user)) {
             ContentCreator cc = ContentCreator(dataStorage.getCreatorAddressFromUser(_user));
-            require(!cc.getLock);
+            bool ccLock = cc.getLock();
+            require(!ccLock);
         }
+        _;
     }
 
     //TODO: modifer so that only a content creator can use.
 
     modifier ownerOrRegister {
-        require(msg.sender == owner || msg.sender == dataStorage.registerAddress);
+        require(msg.sender == owner || msg.sender == dataStorage.registryAddress());
         _;
     }
 
     constructor(address _dataStorage, address _owner) 
         public
-        neverInEmergency
+        stopInEmergency
     {
         dataStorage = DataStorage(_dataStorage);
         owner = _owner;
@@ -58,13 +62,13 @@ contract LoveMachine {
     function buyViews(address _userContract, uint _amount) 
         public 
         payable
-        lockUser
+        lockUser(_userContract)
         stopInEmergency
-        pauseFunction
+        pauseModifier
     {
         uint amountPossible = msg.value / 10**13;
         dataStorage.boughtViews(_userContract, amountPossible);
-        dataStorage.setTotalViewsDispenced(_amount);
+        dataStorage.setTotalViewsDispenced(_userContract, _amount);
     }
 
     //TODO: !! buyViewsFor(Uint _amount, address _reciver)
