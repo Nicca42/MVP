@@ -119,4 +119,8 @@ contract Register {
     }
     //TODO: create function to disable this contract and to create 
             //a new one in the data storage
+    function kill(address _newRegister) {
+        dataStorage.updateRegister(_newRegister);
+        selfdesctruct(owner);
+    }
 }

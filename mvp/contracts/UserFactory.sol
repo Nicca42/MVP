@@ -2,6 +2,7 @@ pragma solidity 0.4.24;
 
 import "./DataStorage.sol";
 import "./Register.sol";
+import "./ContentCreatorFactory.sol";
 import "./User.sol";
 
 contract UserFactory {
@@ -38,7 +39,7 @@ contract UserFactory {
     }
 
     modifier ownerOrRegister {
-        require(msg.sender == owner || msg.sender == registerAddress);
+        require(msg.sender == owner || msg.sender == dataStorage.registerAddress);
         _;
     }
     
@@ -50,14 +51,13 @@ contract UserFactory {
         _;
     }
 
-    constructor(address _dataStorage, address _owner, address _register) 
+    constructor(address _dataStorage, address _owner, address _ccFactory) 
         public 
     {
         owner = _owner;
         dataStorageAddress = _dataStorage;
-        registerAddress = _register;
         dataStorage = DataStorage(_dataStorage);
-        register = Register(_register);
+        ccFactory = ContentCreatorFactory(_ccFactory);
     }
 
     function createUser(string _userName) 
@@ -67,7 +67,7 @@ contract UserFactory {
         pauseFunction
         returns(address userContractAdd) 
     {
-        address newUser = new User(msg.sender, now, _userName, this);
+        address newUser = new User(msg.sender, now, _userName, this, );
         dataStorage.setNewUserData(msg.sender, newUser, _userName);
         
         return newUser;

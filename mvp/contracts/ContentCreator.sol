@@ -6,19 +6,32 @@ import "./ContentCreatorFactory.sol";
 contract ContentCreator is User {
     address owner;
     address userContract;
+    address ccFactoryAddress;
     ContentCreatorFactory ccf;
+    User user;
    
     modifier isUser { 
         require(msg.sender == owner);
         _;
     }
+
+    modifier onlyCCFactory {
+        require(msg.sender == ccFactoryAddress);
+    }
+
+    modifer onlyAUser(address _user){
+        require(ccF.onlyAUser(_user));
+    }
    
-    constructor(address _UserContractAddress, address _ContentCreatorFactory) 
+    constructor(address _userContractAddress, address _contentCreatorFactory) 
         public 
+        onlyAUser(msg.sender)
     {
         owner = msg.sender;
-        userContract = _UserContractAddress;
-        ccf = ContentCreatorFactory(_ContentCreatorFactory);
+        userContract = _userContractAddress;
+        ccFactoryAddress = _contentCreatorFactory;
+        user = User(_userContractAddress);
+        ccf = ContentCreatorFactory(_contentCreatorFactory);
     }
 
     //TODO: function to create contract 

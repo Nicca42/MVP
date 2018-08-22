@@ -43,7 +43,7 @@ contract LoveMachine {
     //TODO: modifer so that only a content creator can use.
 
     modifier ownerOrRegister {
-        require(msg.sender == owner || msg.sender == registerAddress);
+        require(msg.sender == owner || msg.sender == dataStorage.registerAddress);
         _;
     }
 

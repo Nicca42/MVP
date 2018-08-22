@@ -1,25 +1,28 @@
 pragma solidity 0.4.24;
 
 import "./UserFactory.sol";
+import "./ContentCreatorFactory.sol";
 
 contract User {
     UserFactory uf;
+    ContentCreatorFactory ccFactory;
     address public owner;
     string public userName;
     uint public joinedDate;
     uint daoKey;
     
-    constructor(address _user, uint _joinedDate, string _userName, address _userFactory) 
+    modifier isUser {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    constructor(address _user, uint _joinedDate, string _userName, address _userFactory, address _ccFactory) 
     public {
         owner = _user;
         joinedDate = _joinedDate;
         userName = _userName;
         uf = UserFactory(_userFactory);
-    }
-    
-    modifier isUser {
-        require(msg.sender == owner);
-        _;
+        ccFactory = ContentCreatorFactory(_ccFactory);
     }
     
     function deleteUser() public
@@ -34,7 +37,7 @@ contract User {
     payable
     isUser
     returns(bool) {
-        // ContentCreatorFactory.createNewCC(this);
+        
         return true;
     }
 }

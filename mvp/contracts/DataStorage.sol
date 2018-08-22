@@ -6,12 +6,17 @@ import "./LoveMachine.sol";
 
 contract DataStorage {
     address public owner;
-    address private registry;
+    address public registry;
 
     UserFactory uf;
     ContentCreatorFactory ccf;
     LoveMachine m;
-    Registry r;
+    Registry registry;
+
+    address userFactoryAddress;
+    address ccFactoryAddress;
+    address minterAddress;
+    address registryAddress;
     
     mapping (address => uint) public allUsers; //userContract to views
     mapping (address => uint) public UsersTotalViewPurchases;//userContract to total views bought
@@ -99,17 +104,27 @@ contract DataStorage {
         _;
     }
 
-    modifier onlyRegistry() {
+    modifier onlyRegistry {
         require(msg.sender == registry);
     }
     
     constructor()
         public
     {
+        /**UserFactory uf;
+    ContentCreatorFactory ccf;
+    LoveMachine m;
+    Registry registry; */
         owner = msg.sender;    
-        address _userFactory = new UserFactory(this, owner);
         address _contentCreatorFactory = new ContentCreatorFactory(this, owner);
+        ccFactoryAddress = _contentCreatorFactory;
+
+        address _userFactory = new UserFactory(this, owner, _contentCreatorFactory);
+        userFactoryAddress = _userFactory;
+
         address _minter = new LoveMachine(this, owner);
+        minterAddress = _minter;
+
         address _registry = new Register(
             _userFactoryAddress,
             _contentCreatorFactory,
@@ -117,6 +132,8 @@ contract DataStorage {
             owner,
             this
         );
+        registryAddress = _registry;
+
         this.setUpDataContracts(
             _userFactory,
             _contentCreatorFactory,
@@ -127,6 +144,7 @@ contract DataStorage {
     
     function getAllUserAddresses() 
         public 
+        view
         returns(address[])
     {
         return usersAddresses;
@@ -134,6 +152,7 @@ contract DataStorage {
 
     function getAllCreatorsAddresses() 
         public 
+        view
         returns(address[])
     {
         return creatorsAddresses;
@@ -141,16 +160,18 @@ contract DataStorage {
 
     function getAllUsersNames() 
         public 
+        view
         returns(string[])
     {
         return usersNames;
     }
 
-    function registryUpdateContractState(address _newUserFactory)
+    function registryUpdateUserFactory(address _newUserFactory)
     public
     onlyRegistry
     {
-
+        uf = UserFactory(_newUserFactory);
+        //TODO: register able to update the Contracts States
     }
 
     function getAUsersOwnerData(address _contractAddress)
@@ -178,10 +199,10 @@ contract DataStorage {
         neverInEmergency
         returns(bool)
     {
-        uf = UserFactory(_userFactoryAddress);
         ccf = ContentCreatorFactory(_creatorFactory);
+        uf = UserFactory(_userFactoryAddress);
         m = LoveMachine(_minter);
-        r = Registry(_registry);
+        registry = Registry(_registry);
         
         setPause(false);
         
@@ -228,7 +249,9 @@ contract DataStorage {
     
     function boughtViews(address _userContract, uint _amount)
         public 
-        onlyMinter(_amount) neverInEmergency pauseFunction
+        onlyMinter(_amount) 
+        neverInEmergency 
+        pauseFunction
         returns(bool)
     {
         allUsers[_userContract] += _amount;
@@ -342,10 +365,18 @@ contract DataStorage {
         return true;
     }
 
+    function updateRegister(address _newRegister) 
+        onlyRegistry
+        public
+    {
+        registry = Register(_newRegister);
+    } 
+
     //TODO: function isCreator(address _userContract) onlyMinter returns(bool)
             //determins whether a user address is a creator address
             //needs to have near identical modifer onlyCreator
 
     //TODO: function getCreatorAddressFromUser(address _userContract) onlyMinter onlyCreator(address) returns(address)
             //returns the creators addres from the user 
+
 }

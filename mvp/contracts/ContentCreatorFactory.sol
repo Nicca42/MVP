@@ -42,19 +42,31 @@ contract ContentCreatorFactory {
     }
 
     modifier ownerOrRegister {
-        require(msg.sender == owner || msg.sender == registerAddress);
+        require(msg.sender == owner || msg.sender == dataStorage.registerAddress);
         _;
     }
 
-    constructor(address _dataStorage, address _owner, address _register) 
+    constructor(address _dataStorage, address _owner) 
         public 
     {
         owner = _owner;
         dataStorageAddress = _dataStorage;
-        registerAddress = _register;
         dataStorage = DataStorage(_dataStorage);
-        register = Register(_register);
     }
+
+    function onlyAUser(address _user)
+        public
+        returns(bool)    
+    {
+        bool pass = false;
+        address[] allUsers = dataStorage.getAllUserAddresses();
+        for(uint i = 0; i < allUsers.length; i++) {
+            if(allUsers[i] == _user) {
+                pass = true;
+            }
+        }
+        return(pass);
+    } 
      
     function createContentCreator()
         public 
@@ -62,12 +74,12 @@ contract ContentCreatorFactory {
         onlyUsers(msg.sender)
         stopInEmergency
         pauseFunction
-        returns(bool) 
+        returns(address) 
     {
         //need to call the minter to take care of values. 
         address ccc = new ContentCreator(msg.sender);
         dataStorage.setNewCreatorData(msg.sender, ccc); 
-        
+        return ccc;
     }
 
     function kill(address _minter) 
