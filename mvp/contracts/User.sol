@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
 import "./UserFactory.sol";
-import "./ContentCreatorFactory.sol";
+import "./3ContentCreatorFactory.sol";
 
 contract User {
     UserFactory uf;

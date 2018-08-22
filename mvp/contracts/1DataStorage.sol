@@ -2,9 +2,9 @@ pragma solidity 0.4.24;
 pragma experimental ABIEncoderV2;
 
 import "./UserFactory.sol";
-import "./ContentCreatorFactory.sol";
+import "./3ContentCreatorFactory.sol";
 import "./LoveMachine.sol";
-import "./Register.sol";
+import "./2Register.sol";
 
 contract DataStorage {
     address public owner;

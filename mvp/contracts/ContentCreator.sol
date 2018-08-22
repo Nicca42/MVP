@@ -1,8 +1,8 @@
 pragma solidity 0.4.24;
 
 import "./User.sol";
-import "./Register.sol";
-import "./ContentCreatorFactory.sol";
+import "./2Register.sol";
+import "./3ContentCreatorFactory.sol";
 
 contract ContentCreator is User {
     ContentCreatorFactory ccFactory;
