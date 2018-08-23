@@ -120,30 +120,15 @@ contract DataStorage {
         public
     {
         owner = msg.sender;    
-        address _contentCreatorFactory = new ContentCreatorFactory(this, owner);
-        ccFactoryAddress = _contentCreatorFactory;
-
-        address _userFactory = new UserFactory(this, owner, _contentCreatorFactory);
-        userFactoryAddress = _userFactory;
-
-        address _minter = new LoveMachine(this, owner);
-        minterAddress = _minter;
-
-        address _registry = new Register(
-            _userFactory,
-            _contentCreatorFactory,
-            _minter,
-            owner,
-            this
-        );
-        registryAddress = _registry;
-
-        this.setUpDataContracts(
-            _userFactory,
-            _contentCreatorFactory,
-            _minter,
-            _registry
-        );
+        ccFactoryAddress = new ContentCreatorFactory();
+        userFactoryAddress = new UserFactory();
+        minterAddress = new LoveMachine();
+        registryAddress = new Register();
+        
+        ccf = ContentCreatorFactory(ccFactoryAddress);
+        uf = UserFactory(userFactoryAddress);
+        m = LoveMachine(minterAddress);
+        registry = Register(registryAddress);
     }
     
     function getAllUserAddresses() 
@@ -173,7 +158,6 @@ contract DataStorage {
     function getAUsersName(address _user)
         public
         view
-        
         returns(string)    
     {
         return(allUserNames[_user]);
@@ -181,6 +165,7 @@ contract DataStorage {
     
     function isCreator(address _userAddress)
         public
+        view
         returns(bool)
     {
         if(creatorsContractOwners[_userAddress] != 0) {
@@ -191,6 +176,7 @@ contract DataStorage {
     
     function isUser(address _userAddress)
         public
+        view
         returns(bool)
     {
         if(userContractOwners[_userAddress] != 0) {
@@ -201,6 +187,7 @@ contract DataStorage {
     
     function getCreatorAddressFromUser(address _userAddress)
         public
+        view
         returns(address)
     {
         require(creatorsContractOwners[_userAddress] != 0);
@@ -208,14 +195,16 @@ contract DataStorage {
     }
 
     function getAUsersOwnerData(address _contractAddress)
-    public
-    returns(address _owner)
+        public
+        view
+        returns(address _owner)
     {
         return(userContractOwners[_contractAddress]);
     }
 
     function getAUsersNameData(address _contractAddress)
         public
+        view
         returns(string _userName)
     {
         return(allUserNames[_contractAddress]);
@@ -229,25 +218,26 @@ contract DataStorage {
         totalViewCreated += _amount;
     }
         
-    function setUpDataContracts(
-        address _userFactoryAddress, 
-        address _creatorFactory,
-        address _minter,
-        address _registry
-        )
+    function setUpDataContracts()
         public
         onlyOwner 
         stopInEmergency
         returns(bool)
     {
-        ccf = ContentCreatorFactory(_creatorFactory);
-        uf = UserFactory(_userFactoryAddress);
-        m = LoveMachine(_minter);
-        registry = Register(_registry);
+        ccf.constructorFunction(this, owner);
+        uf.constructorFunction(this, owner, ccFactoryAddress);
+        m.constructorFunction(this, owner);
+        registry.constructorFunction(
+            userFactoryAddress,
+            ccFactoryAddress,
+            minterAddress,
+            owner,
+            this
+        );
         
         setPause(false);
         
-        LogSetUp(_userFactoryAddress, _creatorFactory, _minter);
+        LogSetUp(userFactoryAddress, ccFactoryAddress, minterAddress);
         
         return true;
     }
@@ -300,6 +290,7 @@ contract DataStorage {
     onlyRegistry
     {
         ccf = ContentCreatorFactory(_newCCFactory);
+        //TODO: create new version before setting object
     }
     
     function registryUpdateMinter(address _newMinter)
@@ -394,6 +385,8 @@ contract DataStorage {
         pauseFunction
         returns(bool)
     {
+        require(allUsers[_userContract] > 5, "You need to like your own stuff.");
+        allUsers[_userContract] -= 5;
         allCreators[_creatorContract] = 0;
         creatorsContractOwners[_userContract] = _creatorContract;
         creatorsAddresses.push(_creatorContract);
@@ -412,6 +405,11 @@ contract DataStorage {
         public
         onlyMinter(1)
     {
+        creatorContent[_contentCreatorContract].push(Content({creator: _contentCreatorContract,
+        contentLocationIPFS: _addressIPFS,
+        title: _title,
+        description: _description,
+        views: 0}));
         //reducing balance of content creator
         require(allCreators[_contentCreatorContract] > 5);
         allCreators[_contentCreatorContract] -= 5;
@@ -426,6 +424,15 @@ contract DataStorage {
         //for front end to have access to lates and all content
         emit LogContentCreated(allContent.length, _title, _contentCreatorContract);
         //For the indervidual conent creators to be able to claim ownership of content
+        uint length = creatorContent[_contentCreatorContract].length;
+        creatorContent[_contentCreatorContract][length] = Content({
+            creator: _contentCreatorContract,
+            contentLocationIPFS: _addressIPFS,
+            title: _title,
+            description: _description,
+            views: 0
+        });
+        
         Content[] storage temp = creatorContent[_contentCreatorContract];
         temp.push(Content({
             creator: _contentCreatorContract,

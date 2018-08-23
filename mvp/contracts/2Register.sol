@@ -1,5 +1,6 @@
 pragma solidity 0.4.24;
 
+
 import "./1DataStorage.sol";
 import "./UserFactory.sol";
 import "./3ContentCreatorFactory.sol";
@@ -21,6 +22,7 @@ contract Register {
 
     bool public emergencyStop = false;
     bool public pause = false;
+    bool callOnce = false;
 
     event LogNewUserFactory(address newContract, address oldContract);
     event LogNewContract(
@@ -43,6 +45,11 @@ contract Register {
         require(!dataStorage.pause());
         _;
     }
+    
+    modifier onlyCallOnce {
+        require(!callOnce, "This contract has already been set up");
+        _;
+    }
 
     modifier onlyOwner {
         require(msg.sender == owner);
@@ -50,13 +57,20 @@ contract Register {
     }
 
     constructor(
-        address _backendUserFactory, 
+        
+        ) 
+        public 
+    {
+
+    }
+    
+    function constructorFunction(address _backendUserFactory, 
         address _backendContentCreatorFactory, 
         address _backendMinter, 
         address _owner,
-        address _dataStorage
-        ) 
-        public 
+        address _dataStorage)
+        public
+        onlyCallOnce
     {
         owner == _owner;
         dataStorage = DataStorage(_dataStorage);
@@ -66,6 +80,8 @@ contract Register {
         ccFactory = ContentCreatorFactory(_backendContentCreatorFactory);
         backendMinter = _backendMinter;
         minter = LoveMachine(_backendMinter);
+        callOnce = true;
+        
     }
     
     function changeUserFactory(address _newUserFactory) 
@@ -129,7 +145,10 @@ contract Register {
     }
     //TODO: create function to disable this contract and to create 
             //a new one in the data storage
-    function kill(address _newRegister) {
+    function kill(address _newRegister) 
+        public
+        onlyOwner
+    {
         dataStorage.updateRegister(_newRegister);
         selfdestruct(owner);
     }

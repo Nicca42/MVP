@@ -15,6 +15,7 @@ contract UserFactory {
 
     bool public emergencyStop = false;
     bool public pause = false;
+    bool private callOnce = false;
 
     event LogCreatedUser(address _userAddress, address _contractAddress);
     
@@ -33,6 +34,11 @@ contract UserFactory {
         require(!dataStorage.pause());
         _;
     }
+    
+    modifier onlyCallOnce {
+        require(!callOnce, "This contract has already been set up");
+        _;
+    }
 
     modifier onlyOwner {
         require(msg.sender == owner);
@@ -44,26 +50,26 @@ contract UserFactory {
         _;
     }
     
-    modifier uniqueUserName(string _userName) {
-        string[] memory allUserNames = dataStorage.getAllUsersNames();
-        for(uint i = 0; i < allUserNames.length; i++){
-            require(keccak256(_userName) != keccak256(allUserNames[i]));
-        }
-        _;
-    }
-
-    constructor(address _dataStorage, address _owner, address _ccFactory) 
+    constructor() 
         public 
+    {
+        
+    }
+    
+    function constructorFunction(address _dataStorage, address _owner, address _ccFactory)
+        public
+        onlyCallOnce
     {
         owner = _owner;
         dataStorageAddress = _dataStorage;
         dataStorage = DataStorage(_dataStorage);
         ccFactory = ContentCreatorFactory(_ccFactory);
+        callOnce = true;
     }
 
     function createUser(string _userName) 
         public 
-        uniqueUserName(_userName)
+        // uniqueUserName(_userName)
         stopInEmergency
         pauseFunction
         returns(address userContractAdd) 
@@ -98,6 +104,7 @@ contract UserFactory {
     
     function getMinter()
         public
+        view
         returns(address)
     {
         return dataStorage.minterAddress();
@@ -105,6 +112,7 @@ contract UserFactory {
     
     function getContentCreatorFactory()
         public
+        view
         returns(address)
     {
         return dataStorage.ccFactoryAddress();

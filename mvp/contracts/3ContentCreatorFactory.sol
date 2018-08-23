@@ -14,6 +14,7 @@ contract ContentCreatorFactory {
 
     bool public emergencyStop = false;
     bool public pause = false;
+    bool callOnce = false;
 
     modifier onlyUsers(address _user) {
         bool pass = false;
@@ -42,22 +43,36 @@ contract ContentCreatorFactory {
         require(!dataStorage.pause());
         _;
     }
+    
+    modifier onlyCallOnce {
+        require(!callOnce, "This contract has already been set up");
+        _;
+    }
 
     modifier ownerOrRegister {
         require(msg.sender == owner || msg.sender == dataStorage.registryAddress());
         _;
     }
 
-    constructor(address _dataStorage, address _owner) 
+    constructor() 
         public 
+    {
+    
+    }
+    
+    function constructorFunction(address _dataStorage, address _owner)
+        public
+        onlyCallOnce
     {
         owner = _owner;
         dataStorageAddress = _dataStorage;
         dataStorage = DataStorage(_dataStorage);
+        callOnce = true;
     }
 
     function onlyAUser(address _user)
         public
+        view
         returns(bool)    
     {
         bool pass = false;
@@ -77,14 +92,14 @@ contract ContentCreatorFactory {
         stopInEmergency
         pauseFunction
         returns(bool) 
-    {
-        //need to call the minter to take care of values. 
+    { 
         LoveMachine minter = LoveMachine(dataStorage.minterAddress());
         return minter.createContentCreatorMinter(msg.sender); 
     }
     
     function getMinter() 
         public
+        view
         returns(address)
     {
         return dataStorage.minterAddress();

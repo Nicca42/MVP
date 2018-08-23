@@ -13,6 +13,7 @@ contract LoveMachine {
 
     bool emergencyStop = false;
     bool pause = false;
+    bool callOnce = false;
 
     modifier onlyOwner {
         require(msg.sender == owner);
@@ -26,6 +27,11 @@ contract LoveMachine {
 
     modifier pauseModifier {
         require(!pause);
+        _;
+    }
+    
+    modifier onlyCallOnce {
+        require(!callOnce, "This contract has already been set up");
         _;
     }
     
@@ -62,12 +68,20 @@ contract LoveMachine {
         _;
     }
 
-    constructor(address _dataStorage, address _owner) 
+    constructor() 
         public
         stopInEmergency
     {
+
+    }
+    
+    function constructorFunction(address _dataStorage, address _owner) 
+        public
+        onlyCallOnce
+    {
         dataStorage = DataStorage(_dataStorage);
         owner = _owner;
+        callOnce = true;
     }
 
     function buyViews(address _userContract, uint _amount) 
@@ -76,15 +90,26 @@ contract LoveMachine {
         lockUser(_userContract)
         stopInEmergency
         pauseModifier
+        returns(bool)
     {
         uint amountPossible = msg.value / 10**13;
+        require(amountPossible > 0, "Amount entered not possible");
         dataStorage.boughtViews(_userContract, amountPossible);
         dataStorage.setTotalViewsDispenced(_userContract, _amount);
     }
 
-    //TODO: !! buyViewsFor(Uint _amount, address _reciver)
+     //TODO: !! buyViewsFor(Uint _amount, address _reciver)
                 //lockUser
-
+    function byViewsFor(address _reciver, uint _amount) 
+        public 
+        payable 
+        lockUser(msg.sender)
+        stopInEmergency
+        pauseModifier
+    {
+        
+    }
+   
     //TODO: !! sellViews(uint _amount)
                 //lockUser
 
@@ -125,6 +150,7 @@ contract LoveMachine {
         returns(bool)
     {
         address ccc = new ContentCreator(msg.sender, this);
+        dataStorage.setNewCreatorData(_userAccount, ccc);
     }
     
     function createContentMinter(
