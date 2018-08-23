@@ -68,7 +68,10 @@ contract UserFactory {
         pauseFunction
         returns(address userContractAdd) 
     {
-        address newUser = new User(msg.sender, now, _userName, this, dataStorage.ccFactoryAddress());
+        //address _userWallet,
+        //string _userName, 
+        //address _userFactory
+        address newUser = new User(msg.sender, _userName, this);
         dataStorage.setNewUserData(msg.sender, newUser, _userName);
         
         return newUser;
@@ -91,6 +94,20 @@ contract UserFactory {
             _contractAddress,
             dataStorage.getAUsersNameData(_contractAddress));
         return true;
+    }
+    
+    function getMinter()
+        public
+        returns(address)
+    {
+        return dataStorage.minterAddress();
+    }
+    
+    function getContentCreatorFactory()
+        public
+        returns(address)
+    {
+        return dataStorage.ccFactoryAddress();
     }
 
     function kill(address _minter) 

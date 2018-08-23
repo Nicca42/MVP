@@ -81,6 +81,7 @@ contract Register {
             userFactory.kill(backendMinter);
             backendUserFactory = _newUserFactory;
             userFactory = UserFactory(backendUserFactory);
+            dataStorage.registryUpdateUserFactory(backendUserFactory);
             return true;
         }
         return false;
@@ -102,6 +103,7 @@ contract Register {
             ccFactory.kill(backendMinter);
             backendContentCreatorFactory = _newContentCreatorFactory;
             ccFactory = ContentCreatorFactory(backendContentCreatorFactory);
+            dataStorage.registryUpdateCCFactory(backendContentCreatorFactory);
             return true;
         }
         return false;
@@ -120,6 +122,7 @@ contract Register {
             ccFactory.kill(_newMinter);
             backendMinter = _newMinter;
             minter = LoveMachine(backendMinter);
+            dataStorage.registryUpdateMinter(backendMinter);
             return true;
         }
         return false;

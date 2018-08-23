@@ -1,15 +1,18 @@
 pragma solidity 0.4.24;
 
+import "./1DataStorage.sol";
 import "./User.sol";
-import "./2Register.sol";
 import "./3ContentCreatorFactory.sol";
+import "./LoveMachine.sol";
 
-contract ContentCreator is User {
+contract ContentCreator {
     ContentCreatorFactory ccFactory;
     User user;
     address owner;
     address userContract;
     address ccFactoryAddress;
+    
+    bool ccLock;
    
     modifier isUser { 
         require(msg.sender == owner);
@@ -26,6 +29,12 @@ contract ContentCreator is User {
         _;
     }
     
+    modifier checkLock {
+        require(!user.getLock());
+        require(!ccLock);
+        _;
+    }
+    
     constructor(address _userContractAddress, address _contentCreatorFactory) 
         public 
         onlyAUser(msg.sender)
@@ -36,11 +45,28 @@ contract ContentCreator is User {
         user = User(_userContractAddress);
         ccFactory = ContentCreatorFactory(_contentCreatorFactory);
     }
-
-    //TODO: function to create contract 
-    //TODO: security all calls in endpoint contracts must have call locks.
-    //TODO: EXTRA lock syncroise between user and creator contract so that 
-            //withdraw will not work on all contracts. 
-            //make the loveFactory require the users or content creators 
-            //own lock cannot be locked. 
+    
+    function creatConent(
+        address _contentCreatorContract, 
+        uint _addressIPFS, 
+        string _title, 
+        string _description
+        )
+        public
+        payable
+        checkLock
+        returns(bool)
+    {
+        LoveMachine minter = LoveMachine(ccFactory.getMinter());
+        address(minter).transfer(msg.value);
+        return minter.createContentMinter(this, _addressIPFS, _title, _description);
+    }
+    
+    function getLock()
+        public
+        view
+        returns(bool)
+    {
+        return(ccLock);
+    }
 }

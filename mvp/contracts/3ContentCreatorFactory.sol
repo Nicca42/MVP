@@ -2,6 +2,7 @@ pragma solidity 0.4.24;
 
 import "./1DataStorage.sol";
 import "./2Register.sol";
+import "./LoveMachine.sol";
 import "./ContentCreator.sol";
 
 contract ContentCreatorFactory {
@@ -75,12 +76,18 @@ contract ContentCreatorFactory {
         onlyUsers(msg.sender)
         stopInEmergency
         pauseFunction
-        returns(address) 
+        returns(bool) 
     {
         //need to call the minter to take care of values. 
-        address ccc = new ContentCreator(msg.sender, this);
-        dataStorage.setNewCreatorData(msg.sender, ccc); 
-        return ccc;
+        LoveMachine minter = LoveMachine(dataStorage.minterAddress());
+        return minter.createContentCreatorMinter(msg.sender); 
+    }
+    
+    function getMinter() 
+        public
+        returns(address)
+    {
+        return dataStorage.minterAddress();
     }
 
     function kill(address _minter) 

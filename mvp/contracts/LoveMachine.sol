@@ -7,8 +7,9 @@ import "./ContentCreator.sol";
 
 contract LoveMachine {
     DataStorage dataStorage;
-    User u;
     address owner;
+    
+    enum viewsUsed {LIKED, LOVED, FANLOVED}
 
     bool emergencyStop = false;
     bool pause = false;
@@ -27,6 +28,18 @@ contract LoveMachine {
         require(!pause);
         _;
     }
+    
+    modifier onlyAUser {
+        bool user = dataStorage.isUser(msg.sender);
+        require(user);
+        _;
+    }
+    
+    modifier onlyACreator {
+        bool creator = dataStorage.isCreator(msg.sender);
+        require(creator);
+        _;
+    }
 
     /**
         so that users cannot withdraw from their creator and user
@@ -43,8 +56,6 @@ contract LoveMachine {
         }
         _;
     }
-
-    //TODO: modifer so that only a content creator can use.
 
     modifier ownerOrRegister {
         require(msg.sender == owner || msg.sender == dataStorage.registryAddress());
@@ -85,27 +96,51 @@ contract LoveMachine {
                 //lockUser
                 //onlyCreator
 
-    //TODO: !! finalizeConent(address _contentCreator, string _title, string _desc, string IPFSAddres)
-            /**
-                    data to add to finalize content method
-                function createContent(
-                    address _contentCreatorContract, 
-                    uint _addressIPFS, 
-                    string _title, 
-                    string _description
-                    )
-                    public
-                    onlyMinter(1)
-                    {
-                        founction
-                    }
-             */
+    function liked(address _contentCreator, address _userConsumer)
+        public
+        onlyAUser
+    {
+        dataStorage.storingLikes(DataStorage.ViewsUsed.LIKED, _contentCreator, _userConsumer);
+    }
 
-    //TODO: !! liked(address _contentCreator, _userConsumer)
-
-    //TODO: !! loved(address _contentCreator, _userConsumer)
-
-    //TODO: !! fanLoved(address _contentCreator, _userConsumer)
+    function loved(address _contentCreator, address _userConsumer)
+        public
+        onlyAUser
+    {
+        dataStorage.storingLikes(DataStorage.ViewsUsed.LOVED, _contentCreator, _userConsumer);
+    }
+    
+    function fanLoved(address _contentCreator, address _userConsumer)
+        public
+        onlyAUser
+    {
+        dataStorage.storingLikes(DataStorage.ViewsUsed.FANLOVED, _contentCreator, _userConsumer);
+    }
+    
+    function createContentCreatorMinter(address _userAccount)
+        public
+        payable
+        lockUser(_userAccount)
+        onlyAUser
+        returns(bool)
+    {
+        address ccc = new ContentCreator(msg.sender, this);
+    }
+    
+    function createContentMinter(
+        address _contentCreatorContract, 
+        uint _addressIPFS, 
+        string _title, 
+        string _description
+        ) 
+        public
+        payable
+        onlyACreator
+        lockUser(msg.sender)
+        returns(bool)
+    {
+        dataStorage.createContent(_contentCreatorContract, _addressIPFS, _title, _description);
+    }
 
     function kill() 
         public 

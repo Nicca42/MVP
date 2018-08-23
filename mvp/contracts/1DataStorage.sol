@@ -39,6 +39,11 @@ contract DataStorage {
     mapping (address => Content[]) public creatorContent;//ccc to array of content
     uint private totalViewCreated;
     
+    enum ViewsUsed {LIKED, LOVED, FANLOVED}
+    ViewsUsed liked = ViewsUsed.LIKED;
+    ViewsUsed loved = ViewsUsed.LOVED;
+    ViewsUsed fanLoved = ViewsUsed.FANLOVED;
+    
     bool public emergencyStop = false;
     bool public pause = true;
     
@@ -202,14 +207,6 @@ contract DataStorage {
         return creatorsContractOwners[_userAddress];
     }
 
-    function registryUpdateUserFactory(address _newUserFactory)
-    public
-    onlyRegistry
-    {
-        uf = UserFactory(_newUserFactory);
-        //TODO: register able to update the Contracts States
-    }
-
     function getAUsersOwnerData(address _contractAddress)
     public
     returns(address _owner)
@@ -291,6 +288,27 @@ contract DataStorage {
         emit LogUserCreated(_user, _userContract, _userName);
     }
     
+    function registryUpdateUserFactory(address _newUserFactory)
+    public
+    onlyRegistry
+    {
+        uf = UserFactory(_newUserFactory);
+    }
+    
+    function registryUpdateCCFactory(address _newCCFactory)
+    public
+    onlyRegistry
+    {
+        ccf = ContentCreatorFactory(_newCCFactory);
+    }
+    
+    function registryUpdateMinter(address _newMinter)
+    public
+    onlyRegistry
+    {
+        m = LoveMachine(_newMinter);
+    }
+    
     function boughtViews(address _userContract, uint _amount)
         public 
         onlyMinter(_amount) 
@@ -317,6 +335,27 @@ contract DataStorage {
         emit LogUsedViewsUser(_userContract, _amount);
         
         return true;
+    }
+    
+    function storingLikes(ViewsUsed viewUsedRecived, address _contentOwner, address _user)
+        public 
+        onlyMinter(1)
+    {
+        if (viewUsedRecived == ViewsUsed.LIKED) {
+            require(allUsers[_user] > 5);
+            allUsers[_user] -= 5;
+            allCreators[_contentOwner] += 5;
+        }
+        if (viewUsedRecived == ViewsUsed.LOVED) {
+            require(allUsers[_user] > 15);
+            allUsers[_user] -= 15;
+            allCreators[_contentOwner] += 15;
+        }
+        if (viewUsedRecived == ViewsUsed.FANLOVED) {
+            require(allUsers[_user] > 25);
+            allUsers[_user] -= 25;
+            allCreators[_contentOwner] += 25;
+        }
     }
     
     function removeUserData(address _user, address _userContract, string _userName)
@@ -350,7 +389,7 @@ contract DataStorage {
     
     function setNewCreatorData(address _userContract, address _creatorContract) 
         public 
-        onlyCreatorFactory 
+        onlyMinter(1) 
         stopInEmergency 
         pauseFunction
         returns(bool)
@@ -373,10 +412,10 @@ contract DataStorage {
         public
         onlyMinter(1)
     {
-        //in the ContentCreator contract the minter is called and paid for the creation
-        //the minter then calls this function to compleate the creation of the content
-
-        //for front end to have access to lates and all content
+        //reducing balance of content creator
+        require(allCreators[_contentCreatorContract] > 5);
+        allCreators[_contentCreatorContract] -= 5;
+        
         allContent.push(Content({
             creator: _contentCreatorContract,
             contentLocationIPFS: _addressIPFS,
@@ -384,6 +423,7 @@ contract DataStorage {
             description: _description,
             views: 0
         })); 
+        //for front end to have access to lates and all content
         emit LogContentCreated(allContent.length, _title, _contentCreatorContract);
         //For the indervidual conent creators to be able to claim ownership of content
         Content[] storage temp = creatorContent[_contentCreatorContract];
@@ -424,12 +464,4 @@ contract DataStorage {
     {
         registry = Register(_newRegister);
     } 
-
-    //TODO: function isCreator(address _userContract) onlyMinter returns(bool)
-            //determins whether a user address is a creator address
-            //needs to have near identical modifer onlyCreator
-
-    //TODO: function getCreatorAddressFromUser(address _userContract) onlyMinter onlyCreator(address) returns(address)
-            //returns the creators addres from the user 
-
 }

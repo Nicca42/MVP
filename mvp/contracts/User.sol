@@ -2,15 +2,14 @@ pragma solidity 0.4.24;
 
 import "./UserFactory.sol";
 import "./3ContentCreatorFactory.sol";
+import "./LoveMachine.sol";
 
 contract User {
     UserFactory uf;
-    ContentCreatorFactory ccFactory;
     address public owner;
     string public userName;
     uint public joinedDate;
-    uint daoKey;
-    
+
     bool lock;
     
     modifier isUser {
@@ -23,20 +22,22 @@ contract User {
         _;
     }
     
+    modifier onlyMinter {
+        require(msg.sender == uf.getMinter());
+        _;
+    }
+    
     constructor(
-        address _user,
-        uint _joinedDate, 
+        address _userWallet,
         string _userName, 
-        address _userFactory, 
-        address _ccFactory
+        address _userFactory
         ) 
         public 
     {
-        owner = _user;
-        joinedDate = _joinedDate;
+        owner = _userWallet;
+        joinedDate = now;
         userName = _userName;
         uf = UserFactory(_userFactory);
-        ccFactory = ContentCreatorFactory(_ccFactory);
     }
     
     function getLock()
@@ -59,7 +60,7 @@ contract User {
     payable
     isUser
     returns(bool) {
-        
-        return true;
+        ContentCreatorFactory ccFactory = ContentCreatorFactory(uf.getContentCreatorFactory());
+        return ccFactory.createContentCreator();
     }
 }
