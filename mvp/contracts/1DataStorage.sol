@@ -319,17 +319,17 @@ contract DataStorage {
     }
     
     /**
-    @dev Locks the user so that no other state changes
-        for that user may occur at the same time, thus preventing reentry attacks 
-        and other recursion atacks. It also helps with code readability.
-        As an instance of a User is being created, we have to check the address
-        dose belong to a user. 
-    @notice creating instances of the users is expensive and inifiecient. Future
-        versions will allow for the users data to be entirely stored in the 
-        dataStorage, meaning an instance of the user dose not need to be created 
-        to check or set their lock. 
-    @param The user who is making the state change. 
-    */
+      * @dev Locks the user so that no other state changes
+      *     for that user may occur at the same time, thus preventing reentry attacks 
+      *     and other recursion atacks. It also helps with code readability.
+      *     As an instance of a User is being created, we have to check the address
+      *     dose belong to a user. 
+      * @notice creating instances of the users is expensive and inifiecient. Future
+      *     versions will allow for the users data to be entirely stored in the 
+      *     dataStorage, meaning an instance of the user dose not need to be created 
+      *     to check or set their lock. 
+      * @param The user who is making the state change. 
+      */
     function lockUser(address _user) 
         private
         onlyAUser(_user)
@@ -343,13 +343,13 @@ contract DataStorage {
     }
     
     /**
-    @dev Unlocks the user so they may make other state changes. 
-    @notice creating instances of the users is expensive and inifiecient. Future
-        versions will allow for the users data to be entirely stored in the 
-        dataStorage, meaning an instance of the user dose not need to be created 
-        to check or set their lock. 
-    @param The user who is being unlocked to make state changes.
-    */
+      * @dev Unlocks the user so they may make other state changes. 
+      * @notice creating instances of the users is expensive and inifiecient. Future
+      *     versions will allow for the users data to be entirely stored in the 
+      *     dataStorage, meaning an instance of the user dose not need to be created 
+      *     to check or set their lock. 
+      * @param The user who is being unlocked to make state changes.
+      */
     function unlockUser(address _user)
         private
         onlyAUser(_user)
@@ -363,12 +363,12 @@ contract DataStorage {
     }
         
     /**
-    @dev Saves a users purchase of views after LoveMachine has been paid.
-    @param address _userContract: The users contract address.
-        uint _amount: The amount of views the user has already paid for in the 
-            LoveMachine.
-    @returns bool After it has changed the users balance.
-    */
+      * @dev Saves a users purchase of views after LoveMachine has been paid.
+      * @param address _userContract: The users contract address.
+      *     uint _amount: The amount of views the user has already paid for in the 
+      *         LoveMachine.
+      * @returns bool After it has changed the users balance.
+      */
     function buyViewsSave(address _userContract, uint _amount)
         public
         onlyMinter(_amount)
@@ -384,13 +384,13 @@ contract DataStorage {
     }
     
     /**
-    @dev Saves a users sale of views before the LoveMachine pays the user the 
-        value of the views in Ether.
-    @notice the assert is used as a prevention of underflow.
-    @param address _userContract: The users contract address.
-        uint _amount: The amount of views the user is selling. 
-    @returns bool After it has changed the users balance.
-    */
+      * @dev Saves a users sale of views before the LoveMachine pays the user the 
+      *     value of the views in Ether.
+      * @notice the assert is used as a prevention of underflow.
+      * @param address _userContract: The users contract address.
+      *     uint _amount: The amount of views the user is selling. 
+      * @returns bool After it has changed the users balance.
+      */
     function sellViewsSave(address _userContract, uint _amount)
         public
         onlyMinter(_amount)
@@ -407,8 +407,8 @@ contract DataStorage {
     }
     
     /**
-    @depracated Made the stack too deep.
-    */
+      * @depracated Made the stack too deep.
+      */
     // function recivedViews(address _reciver, uint _amount, address _sender)
     //     public
     //     onlyMinter(_amount)
@@ -429,15 +429,15 @@ contract DataStorage {
     // }
     
     /**
-    @dev Minter calls this function whenever views are charged (for the creation
-        of a Creator account, the uploading of content etc). 
-    @notice This fund will pay the moderator in later versions.
-    @param address _userContract: This is included as users will have the 
-            ability to donate towards the moderator fund and may want 
-            recognition. 
-        uint _amount: the amount of views added to the moderator fund so they 
-        may be tracked in the LoveMachines Ether pool. 
-    */
+      * @dev Minter calls this function whenever views are charged (for the creation
+      *     of a Creator account, the uploading of content etc). 
+      * @notice This fund will pay the moderator in later versions.
+      * @param address _userContract: This is included as users will have the 
+      *         ability to donate towards the moderator fund and may want 
+      *         recognition. 
+      *     uint _amount: the amount of views added to the moderator fund so they 
+      *         may be tracked in the LoveMachines Ether pool. 
+      */
     function usedViews(address _userContract, uint _amount)
         public 
         onlyMinter(_amount) 
@@ -452,10 +452,19 @@ contract DataStorage {
         return true;
     }
     
+    /**
+      * @dev Minter calls this when a user likes content. 
+      * @notice Only the user is locked as the content creator should be able to 
+      *     recive multipule likes, and should not be licked by each one as this 
+      *     would slow down the system sygnificantly.
+      */
     function storingLikes(ViewsUsed viewUsedRecived, address _contentOwner, address _user)
         public 
         onlyMinter(1)
+        lockCheck(_user)
     {
+        lockUser(_user);
+        
         if (viewUsedRecived == ViewsUsed.LIKED) {
             require(allUsers[_user] > 5);
             allUsers[_user] -= 5;
@@ -471,8 +480,21 @@ contract DataStorage {
             allUsers[_user] -= 25;
             allCreators[_contentOwner] += 25;
         }
+        
+        unlockUser(_user);
     }
     
+    /** 
+      * @dev Called by the users Factory by the users contract to delete the 
+      *     users details and send all their views back to them as Ether. 
+      * @notice This method implements the lock to ensure no other transactions
+      *     are happening before the users Contract is deleted.
+      * @param address _user: the address of the users contract. To be removed 
+      *         in future versions and the address of the users wallet from 
+      *         storage.
+      *     address _userContract: The address of the users Contract.
+      *     string _usrName: The users name.
+      */
     function removeUserData(address _user, address _userContract, string _userName)
         public
         onlyUserFactory 
@@ -481,6 +503,9 @@ contract DataStorage {
         pauseFunction
         returns(bool)
     {
+        //function is called through the user factory, but the account should 
+            //have all funds sent to their users wallets. 
+        //TODO: delete creator content as well. 
         delete allUsers[_userContract];
         delete allUserNames[_userContract];
         delete userContractOwners[_userContract];
