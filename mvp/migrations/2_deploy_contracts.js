@@ -1,5 +1,5 @@
-var UserFactory = artifacts.require("./UserFactory.sol");
+var DataStorage = artifacts.require("./1DataStorage.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(UserFactory);
+  deployer.deploy(DataStorage);
 };
