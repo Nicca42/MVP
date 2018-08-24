@@ -1,6 +1,5 @@
 pragma solidity 0.4.24;
 
-import "./1DataStorage.sol";
 import "./User.sol";
 import "./3ContentCreatorFactory.sol";
 import "./LoveMachine.sol";
@@ -32,6 +31,12 @@ contract ContentCreator {
     modifier checkLock {
         require(!user.getLock());
         require(!ccLock);
+        _;
+    }
+    
+    modifier onlyMinter {
+        address minter = ccFactory.getMinter();
+        require(msg.sender == minter);
         _;
     }
     
@@ -68,5 +73,12 @@ contract ContentCreator {
         returns(bool)
     {
         return(ccLock);
+    }
+    
+    function setLock(bool _lock)
+        public
+        onlyMinter
+    {
+        ccLock = _lock;
     }
 }

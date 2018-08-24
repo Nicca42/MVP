@@ -66,7 +66,31 @@ contract UserFactory {
         ccFactory = ContentCreatorFactory(_ccFactory);
         callOnce = true;
     }
-
+    
+    function getMinter()
+        public
+        view
+        returns(address)
+    {
+        return dataStorage.minterAddress();
+    }
+    
+    function getContentCreatorFactory()
+        public
+        view
+        returns(address)
+    {
+        return dataStorage.ccFactoryAddress();
+    }
+    
+    function getDataStorageAddress()
+        public
+        view 
+        returns(address)
+    {
+        return dataStorageAddress;
+    }
+    
     function createUser(string _userName) 
         public 
         // uniqueUserName(_userName)
@@ -100,22 +124,6 @@ contract UserFactory {
             _contractAddress,
             dataStorage.getAUsersNameData(_contractAddress));
         return true;
-    }
-    
-    function getMinter()
-        public
-        view
-        returns(address)
-    {
-        return dataStorage.minterAddress();
-    }
-    
-    function getContentCreatorFactory()
-        public
-        view
-        returns(address)
-    {
-        return dataStorage.ccFactoryAddress();
     }
 
     function kill(address _minter) 

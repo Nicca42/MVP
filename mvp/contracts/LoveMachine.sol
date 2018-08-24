@@ -19,6 +19,13 @@ contract LoveMachine {
         require(msg.sender == owner);
         _;
     }
+    
+    /**
+        TODO: Finish love machine TODO:s and then 
+        commit to git as 
+        Save Point 1.
+    
+    */
 
     modifier stopInEmergency() {
         require(!emergencyStop);
@@ -41,25 +48,21 @@ contract LoveMachine {
         _;
     }
     
+    modifier onlyAUserAddress(address _addressToCheck) {
+        bool user = dataStorage.isUser(_addressToCheck);
+        require(user, "Address is not a user");
+        _;
+    }
+    
     modifier onlyACreator {
         bool creator = dataStorage.isCreator(msg.sender);
         require(creator);
         _;
     }
-
-    /**
-        so that users cannot withdraw from their creator and user
-        account simultaniously 
-     */
-    modifier lockUser(address _user) {
-        User u = User(_user);
-        bool lock = u.getLock();
-        require(!lock);
-        if(dataStorage.isCreator(_user)) {
-            ContentCreator cc = ContentCreator(dataStorage.getCreatorAddressFromUser(_user));
-            bool ccLock = cc.getLock();
-            require(!ccLock);
-        }
+    
+    modifier onlyACreatorAddress(address _addressToCheck) {
+        bool creator = dataStorage.isCreator(_addressToCheck);
+        require(creator);
         _;
     }
 
@@ -84,42 +87,75 @@ contract LoveMachine {
         callOnce = true;
     }
 
-    function buyViews(address _userContract, uint _amount) 
-        public 
-        payable
-        lockUser(_userContract)
-        stopInEmergency
-        pauseModifier
+    function buyViews()
+        public
+        onlyAUser
         returns(bool)
     {
         uint amountPossible = msg.value / 10**13;
-        require(amountPossible > 0, "Amount entered not possible");
-        dataStorage.boughtViews(_userContract, amountPossible);
-        dataStorage.setTotalViewsDispenced(_userContract, _amount);
+        bool updated = dataStorage.buyViewsSave(msg.sender, amountPossible);
+        return updated;
     }
+    
+    // function buyViews(address _userContract, uint _amount) 
+    //     public 
+    //     payable
+    //     onlyAUser
+    //     stopInEmergency
+    //     pauseModifier
+    //     returns(bool)
+    // {
+    //     uint amountPossible = msg.value / 10**13;
+    //     require(amountPossible > 0, "Amount entered not possible");
+    //     dataStorage.boughtViews(_userContract, amountPossible);
+    //     dataStorage.setTotalViewsDispenced(_userContract, _amount);
+    // }
 
-     //TODO: !! buyViewsFor(Uint _amount, address _reciver)
-                //lockUser
-    function byViewsFor(address _reciver, uint _amount) 
-        public 
-        payable 
-        lockUser(msg.sender)
-        stopInEmergency
-        pauseModifier
-    {
+    //  //TODO: !! buyViewsFor(Uint _amount, address _reciver)
+    //             //lockUser
+    // function byViewsFor(address _reciver, uint _amount) 
+    //     public 
+    //     payable 
+    //     onlyAUser
+    //     onlyAUserAddress(_reciver)
+    //     stopInEmergency
+    //     pauseModifier
+    //     returns(bool)
+    // {
+    //      uint amountPossible = msg.value / 10**13;
+    //     require(amountPossible > 0, "Amount entered not possible");
         
-    }
+    // }
    
-    //TODO: !! sellViews(uint _amount)
-                //lockUser
+    // //TODO: !! sellViews(uint _amount)
+    //             //lockUser
+    // function sellViews() 
+    //     public
+    //     onlyAUser
+    //     stopInEmergency
+    //     pauseModifier
+    // {
+        
+    // }
 
-    //TODO: !! giveViewsTo(uint _amount, address _reciver)
-                //lockUser
+    // //TODO: !! giveViewsTo(uint _amount, address _reciver)
+    //             //lockUser
 
-    //TODO: !! getContentViews() => puts views into userContract so they can be withdrawn. 
-                //can only be called from contentCreatorContractg 
-                //lockUser
-                //onlyCreator
+    // //TODO: !! getContentViews() => puts views into userContract so they can be withdrawn. 
+    //             //can only be called from contentCreatorContractg 
+    //             //lockUser
+    //             //onlyCreator
+                
+    // function transferViewsToCreatorContractFromUser(uint _amount, address _userContract)
+    //     public
+    //     onlyACreator
+    // {
+    //     //TODO:
+    //     User u = User(_userContract);
+    //     u.setLockBuying(uint _amount);
+    // }
+    
+    //TODO: transferViewsToUserFromConentCreator 
 
     function liked(address _contentCreator, address _userConsumer)
         public
@@ -145,7 +181,6 @@ contract LoveMachine {
     function createContentCreatorMinter(address _userAccount)
         public
         payable
-        lockUser(_userAccount)
         onlyAUser
         returns(bool)
     {
@@ -162,7 +197,6 @@ contract LoveMachine {
         public
         payable
         onlyACreator
-        lockUser(msg.sender)
         returns(bool)
     {
         dataStorage.createContent(_contentCreatorContract, _addressIPFS, _title, _description);

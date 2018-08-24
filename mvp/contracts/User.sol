@@ -27,6 +27,19 @@ contract User {
         _;
     }
     
+    modifier onlyDataStorage {
+        require(msg.sender == uf.getDataStorageAddress());
+        _;
+    }
+    
+    // function onlyLinkedCreatorAccount 
+    //     internal
+    //     returns(bool _isCreator, address _creator)
+    // {
+    //     bool creator = //check is creator
+    //     require(msg.sender );
+    // }
+    
     constructor(
         address _userWallet,
         string _userName, 
@@ -48,18 +61,35 @@ contract User {
         return(lock);
     }
     
-    function deleteUser() public
-    isUser
-    returns(bool) {
+    function setLock(bool _lock)
+        public
+        onlyDataStorage
+    {
+        lock = _lock;
+    }
+    
+    // function setLockBuying(uint _amount)
+    //     public
+    // {
+        
+    // }
+    
+    function deleteUser() 
+        public
+        isUser
+        returns(bool) 
+    {
         require(uf.deleteUserFinal(this));
         selfdestruct(owner);
         return true;
     }
 
-    function becomeContentCreator() public
-    payable
-    isUser
-    returns(bool) {
+    function becomeContentCreator() 
+        public
+        payable
+        isUser
+        returns(bool) 
+    {
         ContentCreatorFactory ccFactory = ContentCreatorFactory(uf.getContentCreatorFactory());
         return ccFactory.createContentCreator();
     }

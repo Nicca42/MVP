@@ -28,6 +28,7 @@ contract DataStorage {
     address[] public usersAddresses;//contract addresses
     address[] public creatorsAddresses;//creators contract addresses
     string[] public usersNames;//userNames
+    uint public moderatorViews;
     struct Content {
         address creator;
         uint contentLocationIPFS;
@@ -51,7 +52,7 @@ contract DataStorage {
     event LogPause(bool _pause);
     event LogSetUp(address _userFactoryAddress, address _creatorFactoryAddress, address _minterAddress);
     event LogBoughtViewsUser(address _account, uint _amount);
-    event LogUsedViewsUser(address _account, uint _amount);
+    event LogModeriatorFund(address _account, uint _amount);
     event LogUserCreated(address _owner, address _userContract, string _userName);
     event LogUserDeleted(address _owner, address _userContract, string _userName);
     event LogCreatorCreated(address _userCOwner, address _creatorContract);
@@ -83,6 +84,11 @@ contract DataStorage {
         _;
     }
     
+    modifier onlyAUser(address _userAddress) {
+        require(allUsers[_userAddress] != 0);
+        _;
+    }
+    
     modifier onlyCreatorFactory {
         require(msg.sender == ccFactoryAddress);
         _;
@@ -91,6 +97,18 @@ contract DataStorage {
     modifier onlyMinter(uint _amount) {
         require(msg.sender == minterAddress);
         require(_amount > 0);
+        _;
+    }
+    
+    modifier lockCheck(address _user) {
+        User u = User(_user);
+        bool lock = u.getLock();
+        require(!lock);
+        if(this.isCreator(_user)) {
+            ContentCreator cc = ContentCreator(this.getCreatorAddressFromUser(_user));
+            bool ccLock = cc.getLock();
+            require(!ccLock);
+        }
         _;
     }
     
@@ -300,20 +318,126 @@ contract DataStorage {
         m = LoveMachine(_newMinter);
     }
     
-    function boughtViews(address _userContract, uint _amount)
-        public 
-        onlyMinter(_amount) 
-        stopInEmergency 
-        pauseFunction
+    /**
+    @dev Locks the user so that no other state changes
+        for that user may occur at the same time, thus preventing reentry attacks 
+        and other recursion atacks. It also helps with code readability.
+        As an instance of a User is being created, we have to check the address
+        dose belong to a user. 
+    @notice creating instances of the users is expensive and inifiecient. Future
+        versions will allow for the users data to be entirely stored in the 
+        dataStorage, meaning an instance of the user dose not need to be created 
+        to check or set their lock. 
+    @param The user who is making the state change. 
+    */
+    function lockUser(address _user) 
+        private
+        onlyAUser(_user)
+    {
+        User u = User(_user);
+        u.setLock(true);
+        if(this.isCreator(_user)) {
+            ContentCreator ccc = ContentCreator(this.getCreatorAddressFromUser(_user));
+            ccc.setLock(true);
+        }
+    }
+    
+    /**
+    @dev Unlocks the user so they may make other state changes. 
+    @notice creating instances of the users is expensive and inifiecient. Future
+        versions will allow for the users data to be entirely stored in the 
+        dataStorage, meaning an instance of the user dose not need to be created 
+        to check or set their lock. 
+    @param The user who is being unlocked to make state changes.
+    */
+    function unlockUser(address _user)
+        private
+        onlyAUser(_user)
+    {
+         User u = User(_user);
+        u.setLock(false);
+        if(this.isCreator(_user)) {
+            ContentCreator ccc = ContentCreator(this.getCreatorAddressFromUser(_user));
+            ccc.setLock(false);
+        }
+    }
+        
+    /**
+    @dev Saves a users purchase of views after LoveMachine has been paid.
+    @param address _userContract: The users contract address.
+        uint _amount: The amount of views the user has already paid for in the 
+            LoveMachine.
+    @returns bool After it has changed the users balance.
+    */
+    function buyViewsSave(address _userContract, uint _amount)
+        public
+        onlyMinter(_amount)
+        lockCheck(_userContract)
         returns(bool)
     {
+        lockUser(_userContract);
+        
         allUsers[_userContract] += _amount;
         
-        emit LogBoughtViewsUser(_userContract, _amount);
-        
+        unlockUser(_userContract);
         return true;
     }
     
+    /**
+    @dev Saves a users sale of views before the LoveMachine pays the user the 
+        value of the views in Ether.
+    @notice the assert is used as a prevention of underflow.
+    @param address _userContract: The users contract address.
+        uint _amount: The amount of views the user is selling. 
+    @returns bool After it has changed the users balance.
+    */
+    function sellViewsSave(address _userContract, uint _amount)
+        public
+        onlyMinter(_amount)
+        lockCheck(_userContract)
+        returns(bool)
+    {
+        lockUser(_userContract);
+        
+        assert(allUsers[_userContract] - _amount > 0);
+        
+        allUsers[_userContract] -= _amount;
+        
+        unlockUser(_userContract);
+    }
+    
+    /**
+    @depracated Made the stack too deep.
+    */
+    // function recivedViews(address _reciver, uint _amount, address _sender)
+    //     public
+    //     onlyMinter(_amount)
+    //     onlyAUser(_reciver)
+    //     onlyAUser(_sender)
+
+    //     stopInEmergency
+    //     pauseFunction
+    //     returns(bool compleated)
+    // {
+    //     User reciver = User(_reciver);
+    //     User sender = User(_sender);
+        
+    //     reciver.setLock(true);
+    //     sender.setLock(true);
+        
+        
+    // }
+    
+    /**
+    @dev Minter calls this function whenever views are charged (for the creation
+        of a Creator account, the uploading of content etc). 
+    @notice This fund will pay the moderator in later versions.
+    @param address _userContract: This is included as users will have the 
+            ability to donate towards the moderator fund and may want 
+            recognition. 
+        uint _amount: the amount of views added to the moderator fund so they 
+        may be tracked in the LoveMachines Ether pool. 
+    */
     function usedViews(address _userContract, uint _amount)
         public 
         onlyMinter(_amount) 
@@ -321,9 +445,9 @@ contract DataStorage {
         pauseFunction
         returns(bool)
     {
-        allUsers[_userContract] -= _amount;
+        moderatorViews += _amount;
         
-        emit LogUsedViewsUser(_userContract, _amount);
+        emit LogModeriatorFund(_userContract, _amount);
         
         return true;
     }
