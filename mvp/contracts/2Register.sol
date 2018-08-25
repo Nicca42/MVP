@@ -21,7 +21,7 @@ contract Register {
     address owner;
 
     bool public emergencyStop = false;
-    bool public pause = false;
+    bool public pause = true;
     bool callOnce = false;
 
     event LogNewUserFactory(address newContract, address oldContract);
@@ -30,32 +30,38 @@ contract Register {
         address backendContentCreatorFactory
     );
 
+    //Restricts functions use to when there is an emergency 
     modifier onlyInEmergency {
         require(emergencyStop);
         _;
     }
     
+    //Restricts functions to only when there is not an emergency.
     modifier stopInEmergency {
         require(!emergencyStop);
         _;
     }
     
+    //pauses all functionality untill contract set up is compleate.
     modifier pauseFunction {
         require(!pause);
         require(!dataStorage.pause());
         _;
     }
     
+    //This allows the set up to only run once.
     modifier onlyCallOnce {
         require(!callOnce, "This contract has already been set up");
         _;
     }
 
+    //Restricts the function to only be called by the owner.
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
 
+    //The empty constructor function allowing for the address to be created.
     constructor(
         
         ) 
@@ -64,6 +70,13 @@ contract Register {
 
     }
     
+    /**
+      * @dev Allows for the set up of the Register contract. 
+      *     This function is required as a contract dose not have
+      *     an address untill the constructor has finished executing, 
+      *     so the constructor functionality had to be seporated out 
+      *     to allow for the various addresses to be created and passed in. 
+      */
     function constructorFunction(address _backendUserFactory, 
         address _backendContentCreatorFactory, 
         address _backendMinter, 
@@ -80,10 +93,19 @@ contract Register {
         ccFactory = ContentCreatorFactory(_backendContentCreatorFactory);
         backendMinter = _backendMinter;
         minter = LoveMachine(_backendMinter);
+        
+        pause = false;
+        
         callOnce = true;
         
     }
     
+    /**
+      * @dev Allows the owner to upgrade the UserFactory contract by entering the new address
+      *     into this method.
+      * @param _newUserFactory : The address of the new UserFactory address.
+      * @return bool Letting the owner know if it successfully updated the UserFactory. 
+      */
     function changeUserFactory(address _newUserFactory) 
         public
         onlyOwner()
@@ -92,7 +114,9 @@ contract Register {
         returns(bool) 
     {
         if(_newUserFactory != backendUserFactory) {
+            
             emit LogNewContract(_newUserFactory, backendUserFactory);
+            
             previousUserFactories.push(backendUserFactory);
             userFactory.kill(backendMinter);
             backendUserFactory = _newUserFactory;
@@ -102,7 +126,26 @@ contract Register {
         }
         return false;
     }
+    
+    /**
+      * @return address The address of the current userFactory.
+      */
+    function getUserFactory()
+        public
+        view
+        returns(address)
+    {
+        return backendUserFactory;
+    }
 
+    /**
+      * @dev Allows the owner to upgrade the ContentCreatorFactory contract by entering 
+      *     the new address into this method.
+      * @param _newContentCreatorFactory : The address of the new ContentCreatorFactory 
+      *         address.
+      * @return bool Letting the owner know if it successfully updated the 
+      *     ContentCreatorFactory. 
+      */
     function changeContentCreatorFactory(address _newContentCreatorFactory) 
         public
         onlyOwner()
@@ -111,10 +154,12 @@ contract Register {
         returns(bool) 
     {
         if(_newContentCreatorFactory != backendContentCreatorFactory) {
+            
             emit LogNewContract(
                 _newContentCreatorFactory, 
                 backendContentCreatorFactory
             );
+            
             previousContentCreatorFactories.push(backendUserFactory);
             ccFactory.kill(backendMinter);
             backendContentCreatorFactory = _newContentCreatorFactory;
@@ -124,7 +169,26 @@ contract Register {
         }
         return false;
     }
+    
+    /**
+      * @return address The address of the current contentCreatorFactory.
+      */
+    function getContentCreatorFactory()
+        public
+        view
+        returns(address)
+    {
+        return backendContentCreatorFactory;
+    }
 
+    /**
+      * @dev Allows the owner to upgrade the Minter contract by entering  the 
+      *     new address into this method.
+      * @param _newMinter : The address of the new Minter 
+      *         address.
+      * @return bool Letting the owner know if it successfully updated the 
+      *     Minter. 
+      */
     function changeMinter(address _newMinter) 
         public
         onlyOwner()
@@ -133,7 +197,9 @@ contract Register {
         returns(bool) 
     {
         if(_newMinter != backendMinter) {
+            
             emit LogNewContract(_newMinter, backendMinter);
+            
             previousMinters.push(backendMinter);
             ccFactory.kill(_newMinter);
             backendMinter = _newMinter;
@@ -143,11 +209,29 @@ contract Register {
         }
         return false;
     }
-    //TODO: create function to disable this contract and to create 
-            //a new one in the data storage
+    
+    /**
+      * @return address The address of the current Minter.
+      */
+    function getMinter()
+        public
+        view
+        returns(address)
+    {
+        return backendMinter;
+    }
+    
+    /**
+      * @dev Only callable by the onwer, this allows the owner to
+      *     upgrade the register itself. Calling this function may require 
+      *     some set up to be changed in the fornt end, for example the 
+      *     front ends pointer to the current Register. 
+      * @param _newRegister : The address of the replacing register. 
+      */
     function kill(address _newRegister) 
         public
         onlyOwner
+        pauseFunction
     {
         dataStorage.updateRegister(_newRegister);
         selfdestruct(owner);

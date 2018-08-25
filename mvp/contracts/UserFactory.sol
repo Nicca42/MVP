@@ -83,6 +83,22 @@ contract UserFactory {
         return dataStorage.ccFactoryAddress();
     }
     
+    function isCreator()
+        public 
+        view
+        returns(bool)
+    {
+        return dataStorage.isCreator(msg.sender);
+    }
+    
+    function getCreatorAddress()
+        public
+        view
+        returns(address)
+    {
+        return dataStorage.getCreatorAddressFromUser(msg.sender);
+    }
+    
     function getDataStorageAddress()
         public
         view 
@@ -123,6 +139,8 @@ contract UserFactory {
             dataStorage.getAUsersOwnerData(_contractAddress), 
             _contractAddress,
             dataStorage.getAUsersNameData(_contractAddress));
+            
+            //TODO: needs to check if user is a creator and delete creator too
         return true;
     }
 
