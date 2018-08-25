@@ -260,7 +260,7 @@ contract DataStorage {
         view
         returns(address)
     {
-        return registry.getUserFactory();
+        return registry.getMinter();
     }
     
     /**
@@ -309,6 +309,28 @@ contract DataStorage {
         return(allUserNames[_user]);
     }
     
+    /**
+      * @dev Checks the uniqueness of a userName. 
+      * @param _userName : The userName to be checked. 
+      * @return bool : Wether the user name is unique or 
+      *     not.
+      */
+    function isUnique(string _userName)
+        public
+        view
+        returns(bool)
+    {
+        for(uint i = 0; i < usersNames.length; i++){
+            if(keccak256(_userName) != keccak256(usersNames[i])) 
+            {
+
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
       * @param _userAddress : The address of the user 
       *     that is being checked as a creator. 
@@ -465,32 +487,6 @@ contract DataStorage {
         emit LogPause(pauseState);
         
         return pause = pauseState;
-    }
-    
-    /**
-      * @dev Creates a new userUser. 
-      * @notice Only the user factory can call the creation of a new 
-      *     user, so that the user has to be registed to the system 
-      *     and to ensure that the user is an actual user and belongs to 
-      *     the  UserFactory.
-      * @param _user : The address of the creators wallwt. 
-      *     _userContract : The address of the users created user contract.
-      *     _userName : The users chosen userName. 
-      */
-    function setNewUserData(address _user, address _userContract, string _userName)
-        public 
-        onlyUserFactory 
-        uniqueUserName(_userName) 
-        stopInEmergency
-        pauseFunction
-    {
-        allUsers[_userContract] = 0;
-        allUserNames[_userContract] = _userName;
-        userContractOwners[_userContract] = _user;
-        usersAddresses.push(_userContract);
-        usersNames.push(_userName);
-        
-        emit LogUserCreated(_user, _userContract, _userName);
     }
     
     /**
@@ -703,6 +699,32 @@ contract DataStorage {
         }
         
         unlockUser(_user);
+    }
+
+    /**
+      * @dev Creates a new userUser. 
+      * @notice Only the user factory can call the creation of a new 
+      *     user, so that the user has to be registed to the system 
+      *     and to ensure that the user is an actual user and belongs to 
+      *     the  UserFactory.
+      * @param _user : The address of the creators wallwt. 
+      *     _userContract : The address of the users created user contract.
+      *     _userName : The users chosen userName. 
+      */
+    function setNewUserData(address _user, address _userContract, string _userName)
+        public 
+        onlyUserFactory 
+        uniqueUserName(_userName) 
+        stopInEmergency
+        pauseFunction
+    {
+        allUsers[_userContract] = 0;
+        allUserNames[_userContract] = _userName;
+        userContractOwners[_userContract] = _user;
+        usersAddresses.push(_userContract);
+        usersNames.push(_userName);
+        
+        emit LogUserCreated(_user, _userContract, _userName);
     }
     
     /** 

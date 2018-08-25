@@ -19,54 +19,70 @@ contract UserFactory {
 
     event LogCreatedUser(address _userAddress, address _contractAddress);
     
+    //Ensures the function is only used in an emergency.
     modifier onlyInEmergency {
         require(emergencyStop);
         _;
     }
     
+    //Ensures the function stops in an emergency.
     modifier stopInEmergency {
         require(!emergencyStop);
         _;
     }
     
+    //Ensures the function is paused untill set-up.
     modifier pauseFunction {
         require(!pause);
         require(!dataStorage.pause());
         _;
     }
     
+    //Ensures the function is only called nce.
     modifier onlyCallOnce {
         require(!callOnce, "This contract has already been set up");
         _;
     }
 
+    //Ensures only the owner can call the function.
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
 
+    //Ensures only the owner or the register can call this function. 
     modifier ownerOrRegister {
         require(msg.sender == owner || msg.sender == dataStorage.registryAddress());
         _;
     }
     
-    constructor() 
+    /**
+      * @dev The constructor for the UserFactory. 
+      */
+    constructor(address _dataStorage, address _owner, address _ccFactory) 
         public 
     {
-        
-    }
-    
-    function constructorFunction(address _dataStorage, address _owner, address _ccFactory)
-        public
-        onlyCallOnce
-    {
-        owner = _owner;
         dataStorageAddress = _dataStorage;
         dataStorage = DataStorage(_dataStorage);
+        owner = _owner;
         ccFactory = ContentCreatorFactory(_ccFactory);
-        callOnce = true;
     }
     
+    // function constructorFunction(address _dataStorage, address _owner, address _ccFactory)
+    //     public
+    //     onlyCallOnce
+    // {
+    //     owner = _owner;
+    //     dataStorageAddress = _dataStorage;
+    //     dataStorage = DataStorage(_dataStorage);
+    //     ccFactory = ContentCreatorFactory(_ccFactory);
+    //     callOnce = true;
+    // }
+    
+    
+    /**
+      * @return address : The address of the current LoveMahcine.
+      */
     function getMinter()
         public
         view
@@ -75,6 +91,10 @@ contract UserFactory {
         return dataStorage.minterAddress();
     }
     
+    /**
+      * @return address : The current address of the 
+      *     ContentCreatorFactory. 
+      */
     function getContentCreatorFactory()
         public
         view
@@ -83,6 +103,9 @@ contract UserFactory {
         return dataStorage.ccFactoryAddress();
     }
     
+    /**
+      * @return bool : If the msg.sender is a creator. 
+      */
     function isCreator()
         public 
         view
@@ -91,6 +114,10 @@ contract UserFactory {
         return dataStorage.isCreator(msg.sender);
     }
     
+    /**
+      * @return address : The address of this users creator 
+      *     contract. 
+      */
     function getCreatorAddress()
         public
         view
@@ -99,6 +126,9 @@ contract UserFactory {
         return dataStorage.getCreatorAddressFromUser(msg.sender);
     }
     
+    /**
+      * @return address : The address of the dataStorage. 
+      */
     function getDataStorageAddress()
         public
         view 
@@ -107,17 +137,22 @@ contract UserFactory {
         return dataStorageAddress;
     }
     
+    /**
+      * @dev The function that creates a new user.
+      * @notice The user name is checked for uniqueness in the 
+      *     dataStorage. 
+      *     The contract is created before this and 
+      * @param _userName : The user name the user has entered. 
+      * @return address : The address of the new user contract. 
+      */
     function createUser(string _userName) 
         public 
-        // uniqueUserName(_userName)
         stopInEmergency
         pauseFunction
-        returns(address userContractAdd) 
+        returns(address) 
     {
-        //address _userWallet,
-        //string _userName, 
-        //address _userFactory
-        address newUser = new User(msg.sender, _userName, this);
+        require(dataStorage.isUnique(_userName), "The user name is not unique.");
+        address newUser = new User(msg.sender, _userName);
         dataStorage.setNewUserData(msg.sender, newUser, _userName);
         
         return newUser;
