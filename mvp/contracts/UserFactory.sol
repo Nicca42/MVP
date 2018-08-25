@@ -152,7 +152,7 @@ contract UserFactory {
         returns(address) 
     {
         require(dataStorage.isUnique(_userName), "The user name is not unique.");
-        address newUser = new User(msg.sender, _userName);
+        address newUser = new User(msg.sender, _userName, this);
         dataStorage.setNewUserData(msg.sender, newUser, _userName);
         
         return newUser;

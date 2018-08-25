@@ -74,19 +74,19 @@ contract DataStorage {
     //Ensures no state changes can happen untill the 
     //contract has finished being set up.
     modifier pauseFunction {
-        require(!pause);
+        require(!pause, "Contract requires set-up.");
         _;
     }
     
     //Ensures only the user can call the function.
     modifier onlyOwner {
-        require(msg.sender == owner);
+        require(msg.sender == owner, "Sender is not owner.");
         _;
     }
     
     //Ensures only the owner can call the function 
     modifier onlyAUser(address _userAddress) {
-        require(allUsers[_userAddress] != 0);
+        require(allUsers[_userAddress] != 0, "Address is not a user address.");
         _;
     }
     
@@ -94,26 +94,29 @@ contract DataStorage {
     //the function. Calls from register so that the most 
     //up to date contract is always used. 
     modifier onlyCreatorFactory {
-        require(msg.sender == registry.getContentCreatorFactory());
+        require(
+            msg.sender == registry.getContentCreatorFactory(),
+            "Sender is not CreatorFacotry."
+        );
         _;
     }
     
     //Ensures only the minter may call the function
     modifier onlyMinter(uint _amount) {
-        require(msg.sender == registry.getMinter());
-        require(_amount > 0);
+        require(msg.sender == registry.getMinter(), "Sender is not Minter");
+        require(_amount > 0, "Amount cannot be negative.");
         _;
     }
     
     //Ensures only they UserFactory can call the function.
     modifier onlyUserFactory {
-        require(msg.sender == registry.getUserFactory());
+        require(msg.sender == registry.getUserFactory(), "Sender is not UserFactory");
         _;
     }
     
     //Ensures only the Register can call this function.
     modifier onlyRegistry {
-        require(msg.sender == registryAddress);
+        require(msg.sender == registryAddress, "Sender is not Register");
         _;
     }
     
@@ -121,11 +124,11 @@ contract DataStorage {
     modifier lockCheck(address _user) {
         User u = User(_user);
         bool lock = u.getLock();
-        require(!lock);
+        require(!lock, "Contract currently locked. Please wait.");
         if(this.isCreator(_user)) {
             ContentCreator cc = ContentCreator(this.getCreatorAddressFromUser(_user));
             bool ccLock = cc.getLock();
-            require(!ccLock);
+            require(!ccLock, "Contract currently locked. Please wait.");
         }
         _;
     }
@@ -143,14 +146,20 @@ contract DataStorage {
     
     //Ensures the user has no more views before they get deleted. 
     modifier beforeDeleteChecksUser(address _userContract) {
-        require(allUsers[_userContract] == 0);
+        require(
+            allUsers[_userContract] == 0, 
+            "User account must be empty before being killed."
+        );
         _;
     }
     
     //Ensures the Creator has no more views before 
     //deleteing their account. 
     modifier beforeDeleteChecksCreator(address _creatorContract) {
-        require(allCreators[_creatorContract] == 0);
+        require(
+            allCreators[_creatorContract] == 0, 
+            "Creator account must be empty before being killed."
+        );
         _;
     }
     
@@ -164,15 +173,15 @@ contract DataStorage {
         public
     {
         owner = msg.sender;    
-        ccFactoryAddress = new ContentCreatorFactory();
-        userFactoryAddress = new UserFactory();
-        minterAddress = new LoveMachine();
-        registryAddress = new Register();
+        // ccFactoryAddress = new ContentCreatorFactory();
+        // userFactoryAddress = new UserFactory();
+        // minterAddress = new LoveMachine();
+        // registryAddress = new Register();
         
-        ccf = ContentCreatorFactory(ccFactoryAddress);
-        uf = UserFactory(userFactoryAddress);
-        m = LoveMachine(minterAddress);
-        registry = Register(registryAddress);
+        // ccf = ContentCreatorFactory(ccFactoryAddress);
+        // uf = UserFactory(userFactoryAddress);
+        // m = LoveMachine(minterAddress);
+        // registry = Register(registryAddress);
     }
     
     /**
@@ -182,22 +191,31 @@ contract DataStorage {
       * @notice This function sets paused to false and allows the data 
       *     storage to be used for state modification. 
       */
-    function setUpDataContracts()
+    function setUpDataContracts(
+        address _userFactoryAddress,
+        address _ccFactoryAddress,
+        address _minterAddress
+        )
         public
         onlyOwner 
         stopInEmergency
         returns(bool)
     {
-        ccf.constructorFunction(this);
-        uf.constructorFunction(this, owner, ccFactoryAddress);
-        m.constructorFunction(this);
-        registry.constructorFunction(
-            userFactoryAddress,
-            ccFactoryAddress,
-            minterAddress,
-            owner,
-            this
-        );
+        ccf = ContentCreatorFactory(ccFactoryAddress);
+        uf = UserFactory(userFactoryAddress);
+        m = LoveMachine(minterAddress);
+        registry = Register(registryAddress);
+        
+        // ccf.constructorFunction(this);
+        // uf.constructorFunction(this, owner, ccFactoryAddress);
+        // m.constructorFunction(this);
+        // registry.constructorFunction(
+        //     userFactoryAddress,
+        //     ccFactoryAddress,
+        //     minterAddress,
+        //     owner,
+        //     this
+        // );
         
         setPause(false);
         
@@ -309,28 +327,6 @@ contract DataStorage {
         return(allUserNames[_user]);
     }
     
-    /**
-      * @dev Checks the uniqueness of a userName. 
-      * @param _userName : The userName to be checked. 
-      * @return bool : Wether the user name is unique or 
-      *     not.
-      */
-    function isUnique(string _userName)
-        public
-        view
-        returns(bool)
-    {
-        for(uint i = 0; i < usersNames.length; i++){
-            if(keccak256(_userName) != keccak256(usersNames[i])) 
-            {
-
-            } else {
-                return false;
-            }
-        }
-        return true;
-    }
-
     /**
       * @param _userAddress : The address of the user 
       *     that is being checked as a creator. 
@@ -487,6 +483,37 @@ contract DataStorage {
         emit LogPause(pauseState);
         
         return pause = pauseState;
+    }
+    
+    /**
+      * @dev Creates a new userUser. 
+      * @notice Only the user factory can call the creation of a new 
+      *     user, so that the user has to be registed to the system 
+      *     and to ensure that the user is an actual user and belongs to 
+      *     the  UserFactory.
+      * @param _user : The address of the creators wallet. 
+      *     _userContract : The address of the users created user contract.
+      *     _userName : The users chosen userName. 
+      */
+    function setNewUserData(address _user, address _userContract, string _userName)
+        public 
+        onlyUserFactory
+        lockCheck(_user)
+        uniqueUserName(_userName) 
+        stopInEmergency
+        pauseFunction
+    {
+        lockUser(_user);
+        
+        allUsers[_userContract] = 0;
+        allUserNames[_userContract] = _userName;
+        userContractOwners[_userContract] = _user;
+        usersAddresses.push(_userContract);
+        usersNames.push(_userName);
+        
+        emit LogUserCreated(_user, _userContract, _userName);
+        
+        unlockUser(_userContract);
     }
     
     /**
@@ -700,32 +727,6 @@ contract DataStorage {
         
         unlockUser(_user);
     }
-
-    /**
-      * @dev Creates a new userUser. 
-      * @notice Only the user factory can call the creation of a new 
-      *     user, so that the user has to be registed to the system 
-      *     and to ensure that the user is an actual user and belongs to 
-      *     the  UserFactory.
-      * @param _user : The address of the creators wallwt. 
-      *     _userContract : The address of the users created user contract.
-      *     _userName : The users chosen userName. 
-      */
-    function setNewUserData(address _user, address _userContract, string _userName)
-        public 
-        onlyUserFactory 
-        uniqueUserName(_userName) 
-        stopInEmergency
-        pauseFunction
-    {
-        allUsers[_userContract] = 0;
-        allUserNames[_userContract] = _userName;
-        userContractOwners[_userContract] = _user;
-        usersAddresses.push(_userContract);
-        usersNames.push(_userName);
-        
-        emit LogUserCreated(_user, _userContract, _userName);
-    }
     
     /** 
       * @dev Called by the users Factory by the users contract to delete the 
@@ -892,6 +893,28 @@ contract DataStorage {
         
         emit LogCreatorDeleted(_userContract, _creatorContract);
         
+        return true;
+    }
+    
+    /**
+      * @dev Checks the uniqueness of a userName. 
+      * @param _userName : The userName to be checked. 
+      * @return bool : Wether the user name is unique or 
+      *     not.
+      */
+    function isUnique(string _userName)
+        public
+        view
+        returns(bool)
+    {
+        for(uint i = 0; i < usersNames.length; i++){
+            if(
+                keccak256(_userName) != keccak256(usersNames[i])) 
+            {
+            } else {
+                return false;
+            }
+        }
         return true;
     }
 
