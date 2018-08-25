@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
-import "./1DataStorage.sol";
-import "./2Register.sol";
+import "./DataStorage.sol";
+import "./Register.sol";
 import "./User.sol";
 import "./ContentCreator.sol";
 
@@ -79,27 +79,29 @@ contract LoveMachine {
     /**
       *@dev Called by the DataStorage to create an instance of this contract.
       */
-    constructor() 
+    constructor(address _dataStorage) 
         public
-    {
-
-    }
-    
-    /**
-      * @dev Allows for the set up of the LoveMachine contract. 
-      *     This function is required as a contract dose not have
-      *     an address untill the constructor has finished executing, 
-      *     so the constructor functionality had to be seporated out 
-      *     to allow for the various addresses to be created and passed in. 
-      */
-    function constructorFunction(address _dataStorage) 
-        public
-        onlyCallOnce
     {
         dataStorage = DataStorage(_dataStorage);
         owner =  dataStorage.owner();
         callOnce = true;
     }
+    
+    // /**
+    //   * @dev Allows for the set up of the LoveMachine contract. 
+    //   *     This function is required as a contract dose not have
+    //   *     an address untill the constructor has finished executing, 
+    //   *     so the constructor functionality had to be seporated out 
+    //   *     to allow for the various addresses to be created and passed in. 
+    //   */
+    // function constructorFunction(address _dataStorage) 
+    //     public
+    //     onlyCallOnce
+    // {
+    //     dataStorage = DataStorage(_dataStorage);
+    //     owner =  dataStorage.owner();
+    //     callOnce = true;
+    // }
 
     /**
       * @dev Allows only user contracts to buy views. 

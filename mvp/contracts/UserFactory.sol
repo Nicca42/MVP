@@ -1,7 +1,8 @@
 pragma solidity 0.4.24;
+pragma experimental ABIEncoderV2;
 
-import "./1DataStorage.sol";
-import "./2Register.sol";
+import "./DataStorage.sol";
+import "./Register.sol";
 import "./3ContentCreatorFactory.sol";
 import "./User.sol";
 
@@ -152,7 +153,7 @@ contract UserFactory {
         returns(address) 
     {
         require(dataStorage.isUnique(_userName), "The user name is not unique.");
-        address newUser = new User(msg.sender, _userName, this);
+        address newUser = new User(msg.sender, _userName);
         dataStorage.setNewUserData(msg.sender, newUser, _userName);
         
         return newUser;

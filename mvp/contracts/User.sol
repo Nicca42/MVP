@@ -54,15 +54,13 @@ contract User {
       */
     constructor(
         address _userWallet,
-        string _userName, 
-        address _userFactory
-        ) 
+        string _userName) 
         public 
     {
         owner = _userWallet;
         joinedDate = now;
         userName = _userName;
-        userFactory = UserFactory(_userFactory);
+        userFactory = UserFactory(msg.sender);
     }
     
     /**

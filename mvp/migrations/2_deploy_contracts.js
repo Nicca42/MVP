@@ -1,5 +1,4 @@
-var DataStorage = artifacts.require("./1DataStorage.sol");
-
+var DataStorage = artifacts.require("./DataStorage.sol");
 module.exports = function(deployer) {
   deployer.deploy(DataStorage);
 };

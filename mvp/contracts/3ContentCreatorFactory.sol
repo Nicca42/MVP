@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
-import "./1DataStorage.sol";
-import "./2Register.sol";
+import "./DataStorage.sol";
+import "./Register.sol";
 import "./LoveMachine.sol";
 import "./ContentCreator.sol";
 
@@ -68,23 +68,8 @@ contract ContentCreatorFactory {
       *     becuse the constructor dose not create an address for itself
       *     untill the constructor has finished. 
       */
-    constructor() 
+    constructor(address _dataStorage) 
         public 
-    {
-    
-    }
-    
-    /**
-      * @dev This function is used to set up the contract after the 
-      *     constructor has created the contract address.
-      * @notice The owner is set to the owner of the DataStorage. 
-      *     This function can only be called once. 
-      * @param _dataStorage : The address of the dataStorage that 
-      *             created it. 
-      */
-    function constructorFunction(address _dataStorage)
-        public
-        onlyCallOnce
     {
         dataStorageAddress = _dataStorage;
         dataStorage = DataStorage(_dataStorage);
@@ -92,6 +77,21 @@ contract ContentCreatorFactory {
         
         callOnce = true;
     }
+    
+    // /**
+    //   * @dev This function is used to set up the contract after the 
+    //   *     constructor has created the contract address.
+    //   * @notice The owner is set to the owner of the DataStorage. 
+    //   *     This function can only be called once. 
+    //   * @param _dataStorage : The address of the dataStorage that 
+    //   *             created it. 
+    //   */
+    // function constructorFunction)
+    //     public
+    //     onlyCallOnce
+    // {
+        
+    // }
 
     /**
       * @dev Used to check if an address is a user. 

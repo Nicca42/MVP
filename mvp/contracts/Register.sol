@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
 
-import "./1DataStorage.sol";
+import "./DataStorage.sol";
 import "./UserFactory.sol";
 import "./3ContentCreatorFactory.sol";
 import "./LoveMachine.sol";

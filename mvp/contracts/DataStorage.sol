@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 import "./UserFactory.sol";
 import "./3ContentCreatorFactory.sol";
 import "./LoveMachine.sol";
-import "./2Register.sol";
+import "./Register.sol";
 
 contract DataStorage {
     address public owner;
