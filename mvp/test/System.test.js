@@ -34,22 +34,26 @@ contract('System test', function(accounts) {
       *         
       *         Index   | Contract                  | Total Tests   
       *         (R)     : Register.sol              : 
-      *         (DS)    : DataStorage.sol           : 6
-      *         (M)     : LoveMachine.sol           : 4
-      *         (UF)    : UserFactory.sol           : 7
-      *         (CCF)   : ContentCreatorFactory.sol : 2
-      *         (U)     : User.sol                  : 7
-      *         (CC)    : ContentCreator.sol        : 2
+      *         (DS)    : DataStorage.sol           : 8
+      *         (M)     : LoveMachine.sol           : 6
+      *         (UF)    : UserFactory.sol           : 10
+      *         (CCF)   : ContentCreatorFactory.sol : 4
+      *         (U)     : User.sol                  : 10
+      *         (CC)    : ContentCreator.sol        : 4
       * 
       *     The order of test indexes will aways be in this order. 
-      *         (DS)            (UF)    (U)
-                                (UF)    (U)
-                (DS)            (UF)    (U)
-                                (UF)    (U)
-                (DS)    (M)     (UF)    (U)
-                (DS)    (M)     (UF)    (U)
-                (DS)    (M)                     (CCF)   (CC)
-                (DS)    (M)     (UF)    (U)     (CCF)   (CC)
+      *     (R)     (DS)    (M)     (UF)    (U)     (CCF)   (CC)
+      *     These are all the tests in the order they will apear: 
+      *             (DS)            (UF)    (U)
+      *                             (UF)    (U)
+      *             (DS)            (UF)    (U)
+      *                             (UF)    (U)
+      *             (DS)    (M)     (UF)    (U)
+      *             (DS)    (M)     (UF)    (U)
+      *             (DS)    (M)     (UF)    (U)     (CCF)   (CC)
+      *             (DS)    (M)     (UF)    (U)     (CCF)   (CC)
+      *             (DS)    (M)     (UF)    (U)     (CCF)   (CC)
+      *             (DS)    (M)     (UF)    (U)     (CCF)   (CC)
       */
 
     beforeEach(async function () {
@@ -220,7 +224,7 @@ contract('System test', function(accounts) {
         assert.equal(ccFactoryAddressFromDataStorage, ccFacotryAddressDeplyed, "Data Storage contains correct content creator factory address");
     });
 
-    it("(DS)(M)(CCF)(UF)(U)(CC)Content Creator creating content", async () => {
+    it("(DS)(M)(UF)(U)(CCF)(CC)Content Creator creating content", async () => {
         await userFactory.createUser("Test001", {from: user});
         let userContractAddress = await userFactory.userAddresses(0);
 
@@ -242,6 +246,52 @@ contract('System test', function(accounts) {
         assert.equal(content[0], userContractAddress, "The user contract for the content is correct");
         assert.equal(content[1], ccContractAddress, "The content creator address is correct");
         assert.equal(content[3], "0x999af54356fq51727979591caaf5309mt00033ql", "IPFS address is correct");
+    });
+
+    it("", async () => {
+        await userFactory.createUser("Test001", {from: user});
+        let userContractAddress = await userFactory.userAddresses(0);
+        console.log("userContractAddress set...");
+        console.log(userContractAddress);
+        let userContract = await User.at(userContractAddress);
+        console.log("User userContract created...");
+        await userContract.buyViews({from: user, value: ether(1)});
+        console.log("User contract buys views...");
+        let minterBalace = await minter.getBalance.call();
+        assert.equal(minterBalace["c"][0], 10000, "Minter balance increases with purchase of views");
+        console.log("Minters balance increases by the correct amount...");
+
+        await userContract.becomeContentCreator({from: user});
+        console.log("userContract becomes content creator...");
+        let ccContractAddress = await contentCreatorFactory.creatorAddresses.call(0);
+        let ccContract = await ContentCreator.at(ccContractAddress);
+        console.log("Content Creator needs to create content...");
+            //TODO: fix content creaton bugs...
+        console.log("Content created...");
+
+        let ccContractBalanceBefore = await dataStorage.allCreators.call(userContractAddress);
+        console.log("contentCreatorContracts balance before the like check...");
+        console.log(ccContractBalanceBefore["c"][0]);
+        let userContractBalanceBefore = await dataStorage.allUsers.call(userContractAddress);
+        console.log("userContractBalance balance before the like check...");
+        console.log(userContractBalanceBefore["c"][0]);
+
+        await minter.liked(ccContractAddress, userContractAddress, {from: userContractAddress});
+        console.log("Minter liked successfully...");
+
+        let ccContractBalanceAfter = await dataStorage.allCreators.call(userContractAddress);
+        console.log("contentCreatorContracts balance after the like check...");
+        console.log(ccContractBalanceAfter["c"][0]);
+        let userContractBalanceAfter = await dataStorage.allUsers.call(userContractAddress);
+        console.log("userContractBalance balance after the like check...");
+        console.log(userContractBalanceAfter["c"][0]);
+
+        assert.notEqual(ccContractBalanceBefore["c"][0], ccContractBalanceAfter["c"][0], "Content Creator Contract was paid");
+        assert.notEqual(userContractBalanceBefore["c"][0], userContractBalanceAfter["c"][0], "User Contract had funds removed");
+
+        // let ccContractDifference = await ccContractBalanceBefore - ccContractBalanceAfter;
+        // let userContractDifference = await userContractBalanceAfter - userContractBalanceBefore;
+        // assert();
     });
 
      // let balance = dataStorage.allUsers.call(userContractTransaction);

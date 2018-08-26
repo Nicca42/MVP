@@ -801,7 +801,7 @@ contract DataStorage {
       */
     function storingLikes(ViewsUsed viewUsedRecived, address _contentOwner, address _user)
         public 
-        onlyMinter(1)
+        //onlyMinter(1)
         lockCheck(_user)
         stopInEmergency
         pauseFunction

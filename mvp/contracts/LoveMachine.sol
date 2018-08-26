@@ -181,7 +181,7 @@ contract LoveMachine {
       */
     function liked(address _contentCreator, address _userConsumer)
         public
-        onlyAUser
+        //onlyAUser
     {
         dataStorage.storingLikes(DataStorage.ViewsUsed.LIKED, _contentCreator, _userConsumer);
     }
