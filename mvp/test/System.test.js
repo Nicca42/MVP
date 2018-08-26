@@ -122,7 +122,7 @@ contract('System test', function(accounts) {
         assert.equal(userBalance["c"][0], 0, "User balance is empty before buying views");
 
         let userContract = await User.at(userContractAddress);
-        userContract.buyViews({from: user, value: ether(1)});
+        await userContract.buyViews({from: user, value: ether(1)});
 
         let minterBalace = await minter.getBalance.call();
         assert.equal(minterBalace["c"][0], 10000, "Minter balance increases with purchase of views");
@@ -163,24 +163,42 @@ contract('System test', function(accounts) {
         let userContractAddress = await userFactory.userAddresses(0);
 
         let userContract = await User.at(userContractAddress);
-        userContract.buyViews({from: user, value: ether(1)});
+        await userContract.buyViews({from: user, value: ether(1)});
         
-        userContract.becomeContentCreator({from: user});
-        let ccContractAddress = await userFactory.userAddresses(0);
-        console.log("Content creator address: ");
-        console.log(ccContractAddress);
-
+        await userContract.becomeContentCreator({from: user});
+        let ccContractAddress = await contentCreatorFactory.creatorAddresses.call(0);
         let ccContract = await ContentCreator.at(ccContractAddress);
+
         let ownerAddress = await ccContract.owner();
-        console.log("Owner address ");
-        console.log(ownerAddress);
         let userOwnerContractAddress = await ccContract.userContract();
-        console.log("UserContract address: ");
-        console.log(userOwnerContractAddress);
         let ccFactoryAddress = await ccContract.ccFactoryAddress();
-        console.log("CCFactory: ");
-        console.log(ccFactoryAddress);
+        let ccFactoryAddressFromDataStorage = await dataStorage.ccFactoryAddress.call();
+
+        assert.equal(ownerAddress, userContractAddress, "ContentCreator is owned by user account");
+        assert.equal(userOwnerContractAddress, userContractAddress, "ContentCreator is set to the user account");
+        assert.equal(ccFactoryAddress, ccFactoryAddressFromDataStorage, "ContentCreatorFactory address is set");
     });
+
+    // it("(DS)(CCF)(CC)Content Creator creating content", async () => {
+    //     await userFactory.createUser("Test001", {from: user});
+    //     let userContractAddress = await userFactory.userAddresses(0);
+
+    //     let userContract = await User.at(userContractAddress);
+    //     await userContract.buyViews({from: user, value: ether(1)});
+
+    //     await userContract.becomeContentCreator({from: user});
+    //     let ccContractAddress = await contentCreatorFactory.creatorAddresses.call(0);
+    //     let ccContract = await ContentCreator.at(ccContractAddress);
+
+    //     await ccContractAddress.creatConent(
+    //         "0x999af54356fq51727979591caaf5309mt00033ql", 
+    //         "Test Content Title", 
+    //         "Test Content Description test test",
+    //         {fr}
+    //     )
+
+    //     assert.equal();
+    // });
 
      // let balance = dataStorage.allUsers.call(userContractTransaction);
         // assert.equal(balance, 0, "Users balance is empty");

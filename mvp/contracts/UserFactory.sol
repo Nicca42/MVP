@@ -3,7 +3,7 @@ pragma experimental ABIEncoderV2;
 
 import "./DataStorage.sol";
 import "./Register.sol";
-import "./3ContentCreatorFactory.sol";
+import "./ContentCreatorFactory.sol";
 import "./User.sol";
 
 contract UserFactory {

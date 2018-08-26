@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
 import "./User.sol";
-import "./3ContentCreatorFactory.sol";
+import "./ContentCreatorFactory.sol";
 import "./LoveMachine.sol";
 
 contract ContentCreator {
@@ -54,6 +54,7 @@ contract ContentCreator {
         _;
     }
     
+    event constructorTest(address _userAccount,address _factory);
     /**
       * @dev Creates a new Conent creator. 
       * @notice This is called by the Content Creator Facotry, which 
@@ -67,6 +68,7 @@ contract ContentCreator {
         public 
         // onlyAUser(_userAccount)
     {
+        emit constructorTest(_userAccount, _contentCreatorFactory);
         owner = _userAccount;
         userContract = _userAccount;
         ccFactoryAddress = _contentCreatorFactory;
@@ -91,6 +93,7 @@ contract ContentCreator {
         checkLock
         returns(bool)
     {
+        re
         LoveMachine minter = LoveMachine(ccFactory.getMinter());
         address(minter).transfer(msg.value);
         return minter.createContentMinter(_addressIPFS, _title, _description);

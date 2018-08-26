@@ -3,7 +3,7 @@ pragma solidity 0.4.24;
 
 import "./DataStorage.sol";
 import "./UserFactory.sol";
-import "./3ContentCreatorFactory.sol";
+import "./ContentCreatorFactory.sol";
 import "./LoveMachine.sol";
 
 contract Register {

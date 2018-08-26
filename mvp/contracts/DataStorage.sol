@@ -2,7 +2,7 @@ pragma solidity 0.4.24;
 pragma experimental ABIEncoderV2;
 
 import "./UserFactory.sol";
-import "./3ContentCreatorFactory.sol";
+import "./ContentCreatorFactory.sol";
 import "./LoveMachine.sol";
 import "./Register.sol";
 
@@ -623,10 +623,10 @@ contract DataStorage {
         pauseFunction
         returns(bool)
     {
-        require(
-            allUsers[_userContract] > 5, 
-            "You need to be able to like your own stuff."
-        );
+        // require(
+        //     allUsers[_userContract] > 5, 
+        //     "You need to be able to like your own stuff."
+        // );
         allUsers[_userContract] -= 5;
         moderatorViews += 5;
         

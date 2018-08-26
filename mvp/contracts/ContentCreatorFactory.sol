@@ -130,12 +130,14 @@ contract ContentCreatorFactory {
         // onlyUsers(msg.sender)
         stopInEmergency
         pauseFunction
-        returns(bool) 
+        returns(address) 
     { 
         address ccc = new ContentCreator(msg.sender, this);
         creatorAddresses.push(ccc);
+        
+        // dataStorage.setNewCreatorData(msg.sender, ccc);
         emit LogContentCreator(msg.sender, this);
-        return dataStorage.setNewCreatorData(msg.sender, ccc);
+        return ccc;
     }
     
     /**

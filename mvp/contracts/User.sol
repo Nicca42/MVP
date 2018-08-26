@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
 import "./UserFactory.sol";
-import "./3ContentCreatorFactory.sol";
+import "./ContentCreatorFactory.sol";
 import "./LoveMachine.sol";
 import "./ContentCreator.sol";
 
@@ -139,7 +139,7 @@ contract User {
         LoveMachine minter = LoveMachine(userFactory.getMinter());
         minter.TransferViewsToUserAccount(_amount);
     }
-    
+     
     /**
       * @dev Allows a user to become a content creator. 
       * @return bool : If it was successful in creating the 
@@ -147,11 +147,12 @@ contract User {
       */
     function becomeContentCreator() 
         public
-        isUser
-        returns(bool) 
+        //isUser
+        returns(address) 
     {
         ContentCreatorFactory ccFactory = ContentCreatorFactory(userFactory.getContentCreatorFactory());
-        return ccFactory.createContentCreator();
+        address ccc = ccFactory.createContentCreator();
+        return ccc;
     }
     
     /**
