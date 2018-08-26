@@ -48,16 +48,18 @@ contract DataStorage {
     bool public emergencyStop = false;
     bool public pause = true;
     
-    event LogEmergency(bool _emergency);
-    event LogPause(bool _pause);
-    event LogSetUp(address _userFactoryAddress, address _creatorFactoryAddress, address _minterAddress);
-    event LogBoughtViewsUser(address _account, uint _amount);
-    event LogModeriatorFund(address _account, uint _amount);
-    event LogUserCreated(address _owner, address _userContract, string _userName);
-    event LogUserDeleted(address _owner, address _userContract, string _userName);
-    event LogCreatorCreated(address _userCOwner, address _creatorContract);
-    event LogCreatorDeleted(address _userContract, address _creatorContract);
-    event LogContentCreated(uint indexed _position, string indexed _title, address indexed _creator);
+    event LogEmergency(bool emergency);
+    event LogPause(bool pause);
+    event LogSetUp(address userFactoryAddress, address creatorFactoryAddress, address minterAddress, address register);
+    event LogBoughtViewsUser(address account, uint amount);
+    event LogSoldViewsUser(address account, uint amount);
+    event LogModeriatorFund(address account, uint amount);
+    event LogUserCreated(address owner, address userContract, string userName);
+    event LogUserDeleted(address owner, address userContract, string userName);
+    event LogCreatorCreated(address userCOwner, address creatorContract);
+    event LogCreatorDeleted(address userContract, address creatorContract);
+    event LogContentCreated(uint indexed position, string indexed title, address indexed creator);
+    event LogCheckingData(address userContract);
     
     //Ensures the user can still withdraw during an emergency.
     modifier onlyInEmergency {
@@ -134,15 +136,15 @@ contract DataStorage {
     }
     
     //Ensures the _userName is unique. 
-    modifier uniqueUserName(string _userName) {
-        for(uint i = 0; i < usersNames.length; i++){
-            require(
-                keccak256(_userName) != keccak256(usersNames[i]), 
-                "UserName has to be unique."
-            );
-        }
-        _;
-    }
+    // modifier uniqueUserName(string _userName) {
+    //     for(uint i = 0; i < usersNames.length; i++){
+    //         require(
+    //             keccak256(_userName) != keccak256(usersNames[i]), 
+    //             "UserName has to be unique."
+    //         );
+    //     }
+    //     _;
+    // }
     
     //Ensures the user has no more views before they get deleted. 
     modifier beforeDeleteChecksUser(address _userContract) {
@@ -194,17 +196,19 @@ contract DataStorage {
     function setUpDataContracts(
         address _userFactoryAddress,
         address _ccFactoryAddress,
-        address _minterAddress
+        address _minterAddress,
+        address _register
         )
         public
         onlyOwner 
         stopInEmergency
         returns(bool)
     {
-        ccf = ContentCreatorFactory(ccFactoryAddress);
-        uf = UserFactory(userFactoryAddress);
-        m = LoveMachine(minterAddress);
-        registry = Register(registryAddress);
+        ccf = ContentCreatorFactory(_ccFactoryAddress);
+        uf = UserFactory(_userFactoryAddress);
+        m = LoveMachine(_minterAddress);
+        minterAddress = _minterAddress;
+        registry = Register(_register);
         
         // ccf.constructorFunction(this);
         // uf.constructorFunction(this, owner, ccFactoryAddress);
@@ -219,7 +223,7 @@ contract DataStorage {
         
         setPause(false);
         
-        LogSetUp(userFactoryAddress, ccFactoryAddress, minterAddress);
+        emit LogSetUp(_userFactoryAddress, _ccFactoryAddress, _minterAddress, _register);
         
         return true;
     }
@@ -238,10 +242,11 @@ contract DataStorage {
       */
     function lockUser(address _user) 
         private
-        onlyAUser(_user)
+        //onlyAUser(_user)
         pauseFunction
     {
-        User u = User(_user);
+        User u;
+        u = User(_user);
         u.setLock(true);
         if(this.isCreator(_user)) {
             ContentCreator ccc = ContentCreator(this.getCreatorAddressFromUser(_user));
@@ -259,10 +264,11 @@ contract DataStorage {
       */
     function unlockUser(address _user)
         private
-        onlyAUser(_user)
+        //onlyAUser(_user)
         pauseFunction
     {
-        User u = User(_user);
+        User u;
+        u = User(_user);
         u.setLock(false);
         if(this.isCreator(_user)) {
             ContentCreator ccc = ContentCreator(this.getCreatorAddressFromUser(_user));
@@ -324,7 +330,8 @@ contract DataStorage {
         view
         returns(string)    
     {
-        return(allUserNames[_user]);
+        string userName = allUserNames[_user];
+        return(userName);
     }
     
     /**
@@ -393,7 +400,7 @@ contract DataStorage {
         view
         returns(string)
     {
-        require(allUsers[_contractAddress] != 0);
+        //require(allUsers[_contractAddress] != 0);
         return(allUserNames[_contractAddress]);
     }
     
@@ -486,37 +493,6 @@ contract DataStorage {
     }
     
     /**
-      * @dev Creates a new userUser. 
-      * @notice Only the user factory can call the creation of a new 
-      *     user, so that the user has to be registed to the system 
-      *     and to ensure that the user is an actual user and belongs to 
-      *     the  UserFactory.
-      * @param _user : The address of the creators wallet. 
-      *     _userContract : The address of the users created user contract.
-      *     _userName : The users chosen userName. 
-      */
-    function setNewUserData(address _user, address _userContract, string _userName)
-        public 
-        onlyUserFactory
-        lockCheck(_user)
-        uniqueUserName(_userName) 
-        stopInEmergency
-        pauseFunction
-    {
-        lockUser(_user);
-        
-        allUsers[_userContract] = 0;
-        allUserNames[_userContract] = _userName;
-        userContractOwners[_userContract] = _user;
-        usersAddresses.push(_userContract);
-        usersNames.push(_userName);
-        
-        emit LogUserCreated(_user, _userContract, _userName);
-        
-        unlockUser(_userContract);
-    }
-    
-    /**
       * @dev used to update the dataStorages instance of the ccontract.
       * @param _newUserFactory : The address of the new contract. 
       */
@@ -551,7 +527,147 @@ contract DataStorage {
     {
         m = LoveMachine(_newMinter);
     }
+
+    /**
+      * @dev Creates a new userUser. 
+      * @notice Only the user factory can call the creation of a new 
+      *     user, so that the user has to be registed to the system 
+      *     and to ensure that the user is an actual user and belongs to 
+      *     the  UserFactory.
+      * @param _user : The address of the creators wallet. 
+      *     _userContract : The address of the users created user contract.
+      *     _userName : The users chosen userName. 
+      */
+    function setNewUserData(address _user, address _userContract, string _userName)
+        public 
+        //onlyUserFactory
+        //lockCheck(_userContract)
+        //stopInEmergency
+        //pauseFunction
+    {
+        //lockUser(_userContract);
         
+        allUsers[_userContract] = 0;
+        allUserNames[_userContract] = _userName;
+        userContractOwners[_userContract] = _user;
+        usersAddresses.push(_userContract);
+        usersNames.push(_userName);
+        
+        emit LogUserCreated(_user, _userContract, _userName);
+        
+        //unlockUser(_userContract);
+    }
+    
+    /** 
+      * @dev Called by the users Factory by the users contract to delete the 
+      *     users details and send all their views back to them as Ether. 
+      * @notice This method implements the lock to ensure no other transactions
+      *     are happening before the users Contract is deleted.
+      * @param _user : The address of the users contract. To be removed 
+      *         in future versions and the address of the users wallet from 
+      *         storage.
+      *     _userContract : The address of the users Contract.
+      *     string _usrName: The users name.
+      */
+    function removeUserData(address _user, address _userContract, string _userName)
+        public
+        onlyUserFactory 
+        beforeDeleteChecksUser(_userContract) 
+        stopInEmergency
+        pauseFunction
+        returns(bool)
+    {
+        //function is called through the user factory, but the account should 
+            //have all funds sent to their users wallets. 
+        //TODO: delete creator content as well. 
+        delete allUsers[_userContract];
+        delete allUserNames[_userContract];
+        delete userContractOwners[_userContract];
+        for(uint i = 0; i < usersAddresses.length; i++) {
+            if(usersAddresses[i] == _userContract) {
+                delete usersAddresses[i];
+                break;
+            }
+        }
+        // for(uint a = 0; a < usersNames.length; a++) {
+        //     if(keccak256(usersNames[a]) == keccak256(_userName)) {
+        //         delete usersNames[a];
+        //         break;
+        //     }
+        // }
+        
+        emit LogUserDeleted(_user, _userContract, _userName);
+        
+        return true;
+    }
+    
+    /**
+      * @dev This allows a new creator to be finalized and stored.
+      * @notice The 'transaction fee' of a like (5 views) is taken 
+      *     and added to the moderator fund, to help pay for the 
+      *     moderation of content. 
+      *     This method can only be called by the minter as the minter 
+      *     needs to handle all payable methods values.
+      * @param _userContract : The address of the users contract.
+      *     _creatorContract : The address of the new Creators contract.
+      */
+    function setNewCreatorData(address _userContract, address _creatorContract) 
+        public 
+        onlyMinter(1) 
+        stopInEmergency 
+        pauseFunction
+        returns(bool)
+    {
+        require(
+            allUsers[_userContract] > 5, 
+            "You need to be able to like your own stuff."
+        );
+        allUsers[_userContract] -= 5;
+        moderatorViews += 5;
+        
+        addToModeratorFund(_userContract, 5);
+        
+        allCreators[_creatorContract] = 0;
+        creatorsContractOwners[_userContract] = _creatorContract;
+        creatorsAddresses.push(_creatorContract);
+        
+        emit LogCreatorCreated(_userContract, _creatorContract);
+        
+        return true;
+    }
+
+    /**
+      * @dev Removes the creators data and deletes all their information off 
+      *     the system. It requires that the user has already cleared their 
+      *     balance. This function deletes the user information and the 
+      *     creator information. 
+      * @param _userContract : The address of the user contract. 
+      *     _creatorContract : The address of the creators contract. 
+      * @return bool : After the function has been completed. 
+      */
+    function removeCreatorData(address _userContract, address _creatorContract) 
+        public
+        onlyCreatorFactory 
+        beforeDeleteChecksCreator(_creatorContract) 
+        beforeDeleteChecksUser(_userContract)
+        stopInEmergency
+        pauseFunction
+        returns(bool)
+    {
+        delete allCreators[_creatorContract];
+        delete creatorsContractOwners[_userContract];
+        for(uint a = 0; a < creatorsAddresses.length; a++) {
+            if(creatorsAddresses[a] == _creatorContract) {
+                delete creatorsAddresses[a];
+                break;
+            }
+        }
+        
+        emit LogCreatorDeleted(_userContract, _creatorContract);
+        
+        return true;
+    }
+
     /**
       * @dev Saves a users purchase of views after LoveMachine has been paid.
       * @param _userContract : The users contract address.
@@ -561,7 +677,7 @@ contract DataStorage {
       */
     function buyViewsSave(address _userContract, uint _amount)
         public
-        onlyMinter(_amount)
+        //onlyMinter(_amount)
         lockCheck(_userContract)
         stopInEmergency
         pauseFunction
@@ -574,7 +690,7 @@ contract DataStorage {
         
         addToModeratorFund(_userContract, 5);
         
-        emit LogBoughtViewsUser(_userContract, _amount);
+        emit LogBoughtViewsUser(_userContract, _amount - 5);
         
         unlockUser(_userContract);
         return true;
@@ -590,7 +706,7 @@ contract DataStorage {
       */
     function sellViewsSave(address _userContract, uint _amount)
         public
-        onlyMinter(_amount)
+        //onlyMinter(_amount)
         lockCheck(_userContract)
         stopInEmergency
         pauseFunction
@@ -601,6 +717,8 @@ contract DataStorage {
         assert(allUsers[_userContract] - _amount > 0);
         
         allUsers[_userContract] -= _amount;
+
+        emit LogSoldViewsUser(_userContract, _amount);
         
         unlockUser(_userContract);
         return true;
@@ -669,24 +787,6 @@ contract DataStorage {
     }
     
     /**
-      * @depracated Made the stack too deep.
-      */
-    // function recivedViews(address _reciver, uint _amount, address _sender)
-    //     public
-    //     onlyMinter(_amount)
-    //     onlyAUser(_reciver)
-    //     onlyAUser(_sender)
-    //     stopInEmergency
-    //     pauseFunction
-    //     returns(bool compleated)
-    // {
-    //     User reciver = User(_reciver);
-    //     User sender = User(_sender);
-    //     reciver.setLock(true);
-    //     sender.setLock(true);
-    // }
-    
-    /**
       * @dev Minter calls this when a user likes content. 
       * @notice Only the user is locked as the content creator should be able to 
       *     recive multipule likes, and should not be licked by each one as this 
@@ -726,84 +826,6 @@ contract DataStorage {
         }
         
         unlockUser(_user);
-    }
-    
-    /** 
-      * @dev Called by the users Factory by the users contract to delete the 
-      *     users details and send all their views back to them as Ether. 
-      * @notice This method implements the lock to ensure no other transactions
-      *     are happening before the users Contract is deleted.
-      * @param _user : The address of the users contract. To be removed 
-      *         in future versions and the address of the users wallet from 
-      *         storage.
-      *     _userContract : The address of the users Contract.
-      *     string _usrName: The users name.
-      */
-    function removeUserData(address _user, address _userContract, string _userName)
-        public
-        onlyUserFactory 
-        beforeDeleteChecksUser(_userContract) 
-        stopInEmergency
-        pauseFunction
-        returns(bool)
-    {
-        //function is called through the user factory, but the account should 
-            //have all funds sent to their users wallets. 
-        //TODO: delete creator content as well. 
-        delete allUsers[_userContract];
-        delete allUserNames[_userContract];
-        delete userContractOwners[_userContract];
-        for(uint i = 0; i < usersAddresses.length; i++) {
-            if(usersAddresses[i] == _userContract) {
-                delete usersAddresses[i];
-                break;
-            }
-        }
-        for(uint a = 0; a < usersNames.length; a++) {
-            if(keccak256(usersNames[a]) == keccak256(_userName)) {
-                delete usersNames[a];
-                break;
-            }
-        }
-        
-        emit LogUserDeleted(_user, _userContract, _userName);
-        
-        return true;
-    }
-    
-    /**
-      * @dev This allows a new creator to be finalized and stored.
-      * @notice The 'transaction fee' of a like (5 views) is taken 
-      *     and added to the moderator fund, to help pay for the 
-      *     moderation of content. 
-      *     This method can only be called by the minter as the minter 
-      *     needs to handle all payable methods values.
-      * @param _userContract : The address of the users contract.
-      *     _creatorContract : The address of the new Creators contract.
-      */
-    function setNewCreatorData(address _userContract, address _creatorContract) 
-        public 
-        onlyMinter(1) 
-        stopInEmergency 
-        pauseFunction
-        returns(bool)
-    {
-        require(
-            allUsers[_userContract] > 5, 
-            "You need to be able to like your own stuff."
-        );
-        allUsers[_userContract] -= 5;
-        moderatorViews += 5;
-        
-        addToModeratorFund(_userContract, 5);
-        
-        allCreators[_creatorContract] = 0;
-        creatorsContractOwners[_userContract] = _creatorContract;
-        creatorsAddresses.push(_creatorContract);
-        
-        emit LogCreatorCreated(_userContract, _creatorContract);
-        
-        return true;
     }
 
     /**
@@ -862,39 +884,7 @@ contract DataStorage {
             description: _description,
             views: 0
         }));
-    }
-    
-    /**
-      * @dev Removes the creators data and deletes all their information off 
-      *     the system. It requires that the user has already cleared their 
-      *     balance. This function deletes the user information and the 
-      *     creator information. 
-      * @param _userContract : The address of the user contract. 
-      *     _creatorContract : The address of the creators contract. 
-      * @return bool : After the function has been completed. 
-      */
-    function removeCreatorData(address _userContract, address _creatorContract) 
-        public
-        onlyCreatorFactory 
-        beforeDeleteChecksCreator(_creatorContract) 
-        beforeDeleteChecksUser(_userContract)
-        stopInEmergency
-        pauseFunction
-        returns(bool)
-    {
-        delete allCreators[_creatorContract];
-        delete creatorsContractOwners[_userContract];
-        for(uint a = 0; a < creatorsAddresses.length; a++) {
-            if(creatorsAddresses[a] == _creatorContract) {
-                delete creatorsAddresses[a];
-                break;
-            }
-        }
-        
-        emit LogCreatorDeleted(_userContract, _creatorContract);
-        
-        return true;
-    }
+    }    
     
     /**
       * @dev Checks the uniqueness of a userName. 
@@ -902,21 +892,21 @@ contract DataStorage {
       * @return bool : Wether the user name is unique or 
       *     not.
       */
-    function isUnique(string _userName)
-        public
-        view
-        returns(bool)
-    {
-        for(uint i = 0; i < usersNames.length; i++){
-            if(
-                keccak256(_userName) != keccak256(usersNames[i])) 
-            {
-            } else {
-                return false;
-            }
-        }
-        return true;
-    }
+    // function isUnique(string _userName)
+    //     public
+    //     view
+    //     returns(bool)
+    // {
+    //     for(uint i = 0; i < usersNames.length; i++){
+    //         if(
+    //             keccak256(_userName) != keccak256(usersNames[i])) 
+    //         {
+    //         } else {
+    //             return false;
+    //         }
+    //     }
+    //     return true;
+    // }
 
     /**
       * @dev This function allows the register to replace itself. 

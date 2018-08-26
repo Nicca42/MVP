@@ -11,52 +11,166 @@ const {
     assertRevert 
 } = require('./helpers/assertRevert');
 
-// var UserFactory = artifacts.require("./UserFactory.sol");
 var DataStorage = artifacts.require("./DataStorage.sol");
 var ContentCreatorFactory = artifacts.require("./ContentCreatorFactory.sol");
 // var ContentCreator = artifacts.require("./ContentCreator.sol");
 var LoveMachine = artifacts.require("./LoveMachine.sol");
-// var User = artifacts.require("./User.sol");
+var User = artifacts.require("./User.sol");
 var UserFactory = artifacts.require("./UserFactory.sol");
 var Register = artifacts.require("./Register.sol");
 
-contract('UserFactory', function(accounts) {
-    const owner = accounts[0]
+contract('System test', function(accounts) {
+    const owner = accounts[0];
     const user = accounts[1];
     const contentCreator = accounts[2];
     const wallet = accounts[3];
     const userAccount3 = accounts[4];
 
-    it("Freash set up of contract system", async () => {
-        const dataStorage = await DataStorage.new({from: owner});
-        console.log("DataStorage address: " + dataStorage.address);
-        const contentCreatorFactory = await ContentCreatorFactory.new(dataStorage.address);
-        const minter = await LoveMachine.new(dataStorage.address);
-        const userFactory = await UserFactory.new(
+    beforeEach(async function () {
+        console.log("Owner address:\t\t" + owner);
+        dataStorage = await DataStorage.new({from: owner});
+        console.log("DataStorage address:\t" + dataStorage.address);
+        contentCreatorFactory = await ContentCreatorFactory.new(dataStorage.address);
+        console.log("CCFactory address:\t" + contentCreatorFactory.address);
+        minter = await LoveMachine.new(dataStorage.address);
+        console.log("Minter address:\t\t" + minter.address);
+        userFactory = await UserFactory.new(
             dataStorage.address, 
             owner, 
             contentCreatorFactory.address
         );
-        const register = await Register(
+        console.log("UserFactory address:\t" + userFactory.address);
+        register = await Register.new(
             userFactory.address, 
             contentCreatorFactory.address,
             minter.address,
-            owner.address,
+            owner,
             dataStorage.address
         );
-        
+        console.log("Register address:\t" + register.address);
         await dataStorage.setUpDataContracts(
             userFactory.address,
             contentCreatorFactory.address,
             minter.address,
+            register.address,
             {from: owner}
         );
+        let dataStoragePause = await dataStorage.pause();
+        console.log("DataStorage pause:\t" + dataStoragePause + "\n");
     });
 
-    it("Creator user", async () => {
+    /**
+     * @notice Becuse of how interlinked my contract system is, it is almost impossible
+      *     to test one contract without testing another. 
+      *     To make it easier to see where each contract is being test and what 
+      *     other contracts are being tested, I have included an index: 
+      * 
+      *         (R) : Register.sol is being tested
+      *         (DS) : DataStorage.sol is being tested
+      *         (M) : LoveMachine.sol is being tested
+      *         (UF) : UserFactory.sol is being tested
+      *         (CCF) : ContentCreatorFactory.sol is being tested
+      *         (U) : User.sol is being tested
+      *         (CC) : ContentCreator.sol is being tested
+      * 
+      *     The order of test indexes will aways be in this order. 
+      */
+
+    it("(DS)(UF)(U)Creator user", async () => {
+        await userFactory.createUser("Test001", {from: user});
+        
+        let userContractAddress = await userFactory.userAddresses(0);
+
+        let isUser = await dataStorage.isUser.call(userContractAddress);
+        assert.equal(isUser, true, "The user is registed in the system");
+    });
+
+    it("(UF)(U)Get userName from user contract", async () => {
+        await userFactory.createUser("Test001", {from: user});
+        let userContractAddress = await userFactory.userAddresses(0);
+
+        let userContract = await User.at(userContractAddress);
+        let userName = await userContract.userName.call();
+        assert.equal(userName, "Test001", "userName is the userName entered");
+    });
+
+    it("(DS)(UF)(U)Get userName from dataStorage", async () => {
+        await userFactory.createUser("Test001", {from: user});
+        let userContractAddress = await userFactory.userAddresses(0);
+
+        let userNameInDataStorage = await dataStorage.getAUsersNameData.call(userContractAddress);
+        assert.equal(userNameInDataStorage, "Test001", "userName is stored in dataStorage");
+    });
+
+    it("(UF)(U)Get user owner", async () => {
+        await userFactory.createUser("Test001", {from: user});
+        let userContractAddress = await userFactory.userAddresses(0);
+
+        let userContract = await User.at(userContractAddress);
+        let userOwner = await userContract.owner.call();
+        assert.equal(userOwner, user, "userName is stored in dataStorage");
+    });
+
+    it("(DS)(M)(UF)(U)User buys views", async () => {
+        await userFactory.createUser("Test001", {from: user});
+        let userContractAddress = await userFactory.userAddresses(0);
+
+        let userBalance = await dataStorage.allUsers.call(userContractAddress, {from: user});
+        assert.equal(userBalance["c"][0], 0, "User balance is empty before buying views");
+
+        let userContract = await User.at(userContractAddress);
+        userContract.buyViews({from: user, value: ether(1)});
+
+        let minterBalace = await minter.getBalance.call();
+        assert.equal(minterBalace["c"][0], 10000, "Minter balance increases with purchase of views");
+
+        let userBalanceAfter = await dataStorage.allUsers.call(userContractAddress, {from: user});
+        assert.equal(userBalanceAfter["c"][0], 99995, "Users balance is 1Eth in views(99 995 views)(5 views flat fee)");
+    });
+
+    it("(DS)(M)(UF)(U)User sells views", async () => {
+        await userFactory.createUser("Test001", {from: user});
+        let userContractAddress = await userFactory.userAddresses(0);
+
+        let userBalance = await dataStorage.allUsers.call(userContractAddress, {from: user});
+        assert.equal(userBalance["c"][0], 0, "User balance is empty before buying views");
+
+        let userContract = await User.at(userContractAddress);
+        userContract.buyViews({from: user, value: ether(1)});
+
+        let minterBalace = await minter.getBalance.call();
+        assert.equal(minterBalace["c"][0], 10000, "Minter balance increases with purchase of views");
+
+        let userBalanceAfter = await dataStorage.allUsers.call(userContractAddress, {from: user});
+        assert.equal(userBalanceAfter["c"][0], 99995, "Users balance is 1Eth in views(99 995 views)(5 views flat fee)");
+        console.log("User balance after buying");
+        console.log(userBalanceAfter["c"][0]);
+
+        userContract.sellViews(1000, {from: user});
+        let userBalanceAfterSelling = await dataStorage.allUsers.call(userContractAddress, {from: user});
+        console.log("User balance after selling views");
+        console.log(userBalanceAfterSelling["c"][0]);
+    });
+
+     // let balance = dataStorage.allUsers.call(userContractTransaction);
+        // assert.equal(balance, 0, "Users balance is empty");
+        // let user = await User(userContractTransaction);
+        // let userOwner = await user.owner.call();
+        // console.log("Usre owner: ");
+        // console.log(userOwner);
+
+        // let userName = await dataStorage.getAUsersName.call(userContractTransaction);
+        // console.log("UserName: " + userName);
+        // console.log(userName);
+        //console.log("User contract userName: " + accountUserName);
+        //assert.equal(userName, "Test001", 'User has been added to array of userNames');
+
+        // let ownerOfUserContract = await 
+        // assert.equal();
         //Test creating user, checking user in datastorage
-    });
+        //assert.equal();
 
+/**
     it("Create Content creator", async () => {
         //Create content creator
         //test change in dataStorage
@@ -153,4 +267,5 @@ contract('UserFactory', function(accounts) {
     it("", async () => {
         //
     });
+    */
 })

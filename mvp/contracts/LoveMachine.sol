@@ -103,6 +103,13 @@ contract LoveMachine {
     //     callOnce = true;
     // }
 
+    function getBalance()
+        public
+        returns(uint)
+    {
+        return this.balance;
+    }
+
     /**
       * @dev Allows only user contracts to buy views. 
       * @return bool : If the proccess was successful.
@@ -110,7 +117,7 @@ contract LoveMachine {
     function buyViews()
         public
         payable
-        onlyAUser
+        //onlyAUser
         returns(bool)
     {
         uint amountPossible = msg.value / 10**13;
@@ -124,12 +131,12 @@ contract LoveMachine {
       */
     function sellViews(uint _amount)
         public
-        onlyAUser
+        // onlyAUser
         returns(bool)
     {
         uint weiValue = _amount * 10**13;
         bool viewsSold = dataStorage.sellViewsSave(msg.sender, _amount);
-        msg.sender.transfer(_amount);
+        msg.sender.transfer(weiValue);
         
         return viewsSold;
     }

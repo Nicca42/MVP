@@ -63,29 +63,15 @@ contract Register {
 
     //The empty constructor function allowing for the address to be created.
     constructor(
-        
-        ) 
-        public 
-    {
-
-    }
-    
-    /**
-      * @dev Allows for the set up of the Register contract. 
-      *     This function is required as a contract dose not have
-      *     an address untill the constructor has finished executing, 
-      *     so the constructor functionality had to be seporated out 
-      *     to allow for the various addresses to be created and passed in. 
-      */
-    function constructorFunction(address _backendUserFactory, 
+        address _backendUserFactory, 
         address _backendContentCreatorFactory, 
         address _backendMinter, 
         address _owner,
-        address _dataStorage)
-        public
-        onlyCallOnce
+        address _dataStorage
+        ) 
+        public 
     {
-        owner == _owner;
+        owner = _owner;
         dataStorage = DataStorage(_dataStorage);
         backendUserFactory = _backendUserFactory;
         userFactory = UserFactory(_backendUserFactory);
@@ -95,10 +81,37 @@ contract Register {
         minter = LoveMachine(_backendMinter);
         
         pause = false;
-        
-        callOnce = true;
-        
     }
+    
+    /**
+      * @dev Allows for the set up of the Register contract. 
+      *     This function is required as a contract dose not have
+      *     an address untill the constructor has finished executing, 
+      *     so the constructor functionality had to be seporated out 
+      *     to allow for the various addresses to be created and passed in. 
+      */
+    // function constructorFunction(address _backendUserFactory, 
+    //     address _backendContentCreatorFactory, 
+    //     address _backendMinter, 
+    //     address _owner,
+    //     address _dataStorage)
+    //     public
+    //     onlyCallOnce
+    // {
+    //     owner == _owner;
+    //     dataStorage = DataStorage(_dataStorage);
+    //     backendUserFactory = _backendUserFactory;
+    //     userFactory = UserFactory(_backendUserFactory);
+    //     backendContentCreatorFactory = _backendContentCreatorFactory;
+    //     ccFactory = ContentCreatorFactory(_backendContentCreatorFactory);
+    //     backendMinter = _backendMinter;
+    //     minter = LoveMachine(_backendMinter);
+        
+    //     pause = false;
+        
+    //     callOnce = true;
+        
+    // }
     
     /**
       * @dev Allows the owner to upgrade the UserFactory contract by entering the new address

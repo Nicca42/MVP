@@ -13,6 +13,7 @@ contract UserFactory {
     address dataStorageAddress; 
     address registerAddress;
     address owner;
+    address[] public userAddresses;
 
     bool public emergencyStop = false;
     bool public pause = false;
@@ -143,20 +144,21 @@ contract UserFactory {
       * @notice The user name is checked for uniqueness in the 
       *     dataStorage. 
       *     The contract is created before this and 
-      * @param _userName : The user name the user has entered. 
+      * 
       * @return address : The address of the new user contract. 
-      */
+      *///@param _userName : The user name the user has entered. 
     function createUser(string _userName) 
         public 
-        stopInEmergency
-        pauseFunction
-        returns(address) 
+        // stopInEmergency
+        // pauseFunction
+        // returns(address) 
     {
-        require(dataStorage.isUnique(_userName), "The user name is not unique.");
+        //require(dataStorage.isUnique(_userName), "The user name is not unique.");
         address newUser = new User(msg.sender, _userName);
+        userAddresses.push(newUser);
         dataStorage.setNewUserData(msg.sender, newUser, _userName);
         
-        return newUser;
+        // return newUser;
     }
     
     function deleteUserFinal(address _contractAddress)

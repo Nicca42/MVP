@@ -47,14 +47,16 @@ contract User {
       * @dev The constructor creates a new User. 
       * @notice The _userWallet is used when deleting account, as 
       *     all the views value will be sent to this address.
-      * @param _userWallet : The address of the users wallet.
-      *     _userName : The users uniqe userName. 
-      *     _userFactory : The address of the user factory that 
-      *         spawned this contract. 
+      *
       */
+    //   / @param _userWallet : The address of the users wallet.
+     //     _userName : The users uniqe userName. 
+      //     _userFactory : The address of the user factory that 
+      //         spawned this contract. 
     constructor(
         address _userWallet,
-        string _userName) 
+        string _userName
+        ) 
         public 
     {
         owner = _userWallet;
@@ -97,7 +99,7 @@ contract User {
         onlyOwner
     {
         LoveMachine minter = LoveMachine(userFactory.getMinter());
-        minter.buyViews();
+        minter.buyViews.value(msg.value)();
     }
     
     /**
