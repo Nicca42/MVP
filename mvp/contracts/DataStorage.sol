@@ -205,7 +205,9 @@ contract DataStorage {
         returns(bool)
     {
         ccf = ContentCreatorFactory(_ccFactoryAddress);
+        ccFactoryAddress = _ccFactoryAddress;
         uf = UserFactory(_userFactoryAddress);
+        userFactoryAddress = _userFactoryAddress;
         m = LoveMachine(_minterAddress);
         minterAddress = _minterAddress;
         registry = Register(_register);
@@ -502,6 +504,7 @@ contract DataStorage {
         pauseFunction
     {
         uf = UserFactory(_newUserFactory);
+        userFactoryAddress = _newUserFactory;
     }
     
     /**
@@ -514,6 +517,7 @@ contract DataStorage {
         pauseFunction
     {
         ccf = ContentCreatorFactory(_newCCFactory);
+        ccFactoryAddress = _newCCFactory;
     }
     
     /**
@@ -526,6 +530,7 @@ contract DataStorage {
         pauseFunction
     {
         m = LoveMachine(_newMinter);
+        minterAddress = _newMinter;
     }
 
     /**
@@ -613,7 +618,7 @@ contract DataStorage {
       */
     function setNewCreatorData(address _userContract, address _creatorContract) 
         public 
-        onlyMinter(1) 
+        //onlyMinter(1) 
         stopInEmergency 
         pauseFunction
         returns(bool)

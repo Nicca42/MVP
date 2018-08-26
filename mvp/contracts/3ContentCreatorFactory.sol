@@ -11,11 +11,13 @@ contract ContentCreatorFactory {
     address dataStorageAddress;
     address registerAddress;
     address owner;
-     address[] public creatorAddresses;
+    address[] public creatorAddresses;
 
     bool public emergencyStop = false;
     bool public pause = false;
     bool callOnce = false;
+
+    event LogContentCreator(address _userAccount, address _contentCreatorFactory);
 
     //Ensures the address is a user address.
     modifier onlyUsers(address _user) {
@@ -124,7 +126,7 @@ contract ContentCreatorFactory {
        */
     function createContentCreator()
         public 
-        payable
+        // payable
         // onlyUsers(msg.sender)
         stopInEmergency
         pauseFunction
@@ -132,6 +134,7 @@ contract ContentCreatorFactory {
     { 
         address ccc = new ContentCreator(msg.sender, this);
         creatorAddresses.push(ccc);
+        emit LogContentCreator(msg.sender, this);
         return dataStorage.setNewCreatorData(msg.sender, ccc);
     }
     

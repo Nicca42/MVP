@@ -13,7 +13,7 @@ const {
 
 var DataStorage = artifacts.require("./DataStorage.sol");
 var ContentCreatorFactory = artifacts.require("./ContentCreatorFactory.sol");
-// var ContentCreator = artifacts.require("./ContentCreator.sol");
+var ContentCreator = artifacts.require("./ContentCreator.sol");
 var LoveMachine = artifacts.require("./LoveMachine.sol");
 var User = artifacts.require("./User.sol");
 var UserFactory = artifacts.require("./UserFactory.sol");
@@ -111,6 +111,9 @@ contract('System test', function(accounts) {
         assert.equal(userOwner, user, "userName is stored in dataStorage");
     });
 
+    /**
+      * @fails This functionality dose not work consistantly or reliably in the current version 
+      */
     it("(DS)(M)(UF)(U)User buys views", async () => {
         await userFactory.createUser("Test001", {from: user});
         let userContractAddress = await userFactory.userAddresses(0);
@@ -155,14 +158,29 @@ contract('System test', function(accounts) {
     //     console.log(userBalanceAfterSelling["c"][0]);
     // });
 
-    // it("(DS)(CCF)(CC)Create content creator", async () => {
-    //     await userFactory.createUser("Test001", {from: user});
-    //     let userContractAddress = await userFactory.userAddresses(0);
+    it("(DS)(CCF)(CC)Create content creator", async () => {
+        await userFactory.createUser("Test001", {from: user});
+        let userContractAddress = await userFactory.userAddresses(0);
 
-    //     let userContract = await User.at(userContractAddress);
-    //     userContract.becomeContentCreator({from: user});
+        let userContract = await User.at(userContractAddress);
+        userContract.buyViews({from: user, value: ether(1)});
+        
+        userContract.becomeContentCreator({from: user});
+        let ccContractAddress = await userFactory.userAddresses(0);
+        console.log("Content creator address: ");
+        console.log(ccContractAddress);
 
-    // });
+        let ccContract = await ContentCreator.at(ccContractAddress);
+        let ownerAddress = await ccContract.owner();
+        console.log("Owner address ");
+        console.log(ownerAddress);
+        let userOwnerContractAddress = await ccContract.userContract();
+        console.log("UserContract address: ");
+        console.log(userOwnerContractAddress);
+        let ccFactoryAddress = await ccContract.ccFactoryAddress();
+        console.log("CCFactory: ");
+        console.log(ccFactoryAddress);
+    });
 
      // let balance = dataStorage.allUsers.call(userContractTransaction);
         // assert.equal(balance, 0, "Users balance is empty");

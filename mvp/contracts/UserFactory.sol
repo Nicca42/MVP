@@ -144,9 +144,9 @@ contract UserFactory {
       * @notice The user name is checked for uniqueness in the 
       *     dataStorage. 
       *     The contract is created before this and 
-      * 
+      * @param _userName : The user name the user has entered. 
       * @return address : The address of the new user contract. 
-      *///@param _userName : The user name the user has entered. 
+      */
     function createUser(string _userName) 
         public 
         // stopInEmergency

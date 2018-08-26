@@ -7,9 +7,9 @@ import "./LoveMachine.sol";
 contract ContentCreator {
     ContentCreatorFactory ccFactory;
     User user;
-    address owner;
-    address userContract;
-    address ccFactoryAddress;
+    address public owner;
+    address public userContract;
+    address public ccFactoryAddress;
     
     bool ccLock;
    
@@ -65,7 +65,7 @@ contract ContentCreator {
       */
     constructor(address _userAccount, address _contentCreatorFactory) 
         public 
-        onlyAUser(_userAccount)
+        // onlyAUser(_userAccount)
     {
         owner = _userAccount;
         userContract = _userAccount;
