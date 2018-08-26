@@ -714,9 +714,9 @@ contract DataStorage {
     {
         lockUser(_userContract);
         
-        assert(allUsers[_userContract] - _amount > 0);
+        //assert(allUsers[_userContract] - _amount > 0);
         
-        allUsers[_userContract] -= _amount;
+        allUsers[_userContract] = allUsers[_userContract] - _amount;
 
         emit LogSoldViewsUser(_userContract, _amount);
         

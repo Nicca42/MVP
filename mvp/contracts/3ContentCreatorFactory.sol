@@ -11,6 +11,7 @@ contract ContentCreatorFactory {
     address dataStorageAddress;
     address registerAddress;
     address owner;
+     address[] public creatorAddresses;
 
     bool public emergencyStop = false;
     bool public pause = false;
@@ -124,12 +125,13 @@ contract ContentCreatorFactory {
     function createContentCreator()
         public 
         payable
-        onlyUsers(msg.sender)
+        // onlyUsers(msg.sender)
         stopInEmergency
         pauseFunction
         returns(bool) 
     { 
         address ccc = new ContentCreator(msg.sender, this);
+        creatorAddresses.push(ccc);
         return dataStorage.setNewCreatorData(msg.sender, ccc);
     }
     

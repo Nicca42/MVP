@@ -136,7 +136,7 @@ contract LoveMachine {
     {
         uint weiValue = _amount * 10**13;
         bool viewsSold = dataStorage.sellViewsSave(msg.sender, _amount);
-        msg.sender.transfer(weiValue);
+        //msg.sender.transfer(weiValue);
         
         return viewsSold;
     }
