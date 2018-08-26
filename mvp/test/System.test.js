@@ -26,6 +26,32 @@ contract('System test', function(accounts) {
     const wallet = accounts[3];
     const userAccount3 = accounts[4];
 
+    /**
+      * @notice Becuse of how interlinked my contract system is, it is almost impossible
+      *     to test one contract without testing another. 
+      *     To make it easier to see where each contract is being test and what 
+      *     other contracts are being tested, I have included an index: 
+      *         
+      *         Index   | Contract                  | Total Tests   
+      *         (R)     : Register.sol              : 
+      *         (DS)    : DataStorage.sol           : 6
+      *         (M)     : LoveMachine.sol           : 4
+      *         (UF)    : UserFactory.sol           : 7
+      *         (CCF)   : ContentCreatorFactory.sol : 2
+      *         (U)     : User.sol                  : 7
+      *         (CC)    : ContentCreator.sol        : 2
+      * 
+      *     The order of test indexes will aways be in this order. 
+      *         (DS)            (UF)    (U)
+                                (UF)    (U)
+                (DS)            (UF)    (U)
+                                (UF)    (U)
+                (DS)    (M)     (UF)    (U)
+                (DS)    (M)     (UF)    (U)
+                (DS)    (M)                     (CCF)   (CC)
+                (DS)    (M)     (UF)    (U)     (CCF)   (CC)
+      */
+
     beforeEach(async function () {
         console.log("Owner address:\t\t" + owner);
         dataStorage = await DataStorage.new({from: owner});
@@ -58,23 +84,6 @@ contract('System test', function(accounts) {
         let dataStoragePause = await dataStorage.pause();
         console.log("DataStorage pause:\t" + dataStoragePause + "\n");
     });
-
-    /**
-     * @notice Becuse of how interlinked my contract system is, it is almost impossible
-      *     to test one contract without testing another. 
-      *     To make it easier to see where each contract is being test and what 
-      *     other contracts are being tested, I have included an index: 
-      * 
-      *         (R) : Register.sol is being tested
-      *         (DS) : DataStorage.sol is being tested
-      *         (M) : LoveMachine.sol is being tested
-      *         (UF) : UserFactory.sol is being tested
-      *         (CCF) : ContentCreatorFactory.sol is being tested
-      *         (U) : User.sol is being tested
-      *         (CC) : ContentCreator.sol is being tested
-      * 
-      *     The order of test indexes will aways be in this order. 
-      */
 
     it("(DS)(UF)(U)Creator user", async () => {
         await userFactory.createUser("Test001", {from: user});
@@ -112,7 +121,7 @@ contract('System test', function(accounts) {
     });
 
     /**
-      * @fails This functionality dose not work consistantly or reliably in the current version 
+      * 
       */
     it("(DS)(M)(UF)(U)User buys views", async () => {
         await userFactory.createUser("Test001", {from: user});
@@ -132,73 +141,108 @@ contract('System test', function(accounts) {
     });
 
     /**
-      * @fails This functionality dose not work in the current version 
+      *
       */
-    // it("(DS)(M)(UF)(U)User sells views", async () => {
-    //     await userFactory.createUser("Test001", {from: user});
-    //     let userContractAddress = await userFactory.userAddresses(0);
+    it("(DS)(M)(UF)(U)User sells views", async () => {
+        await userFactory.createUser("Test001", {from: user});
+        let userContractAddress = await userFactory.userAddresses(0);
 
-    //     let userBalance = await dataStorage.allUsers.call(userContractAddress, {from: user});
-    //     assert.equal(userBalance["c"][0], 0, "User balance is empty before buying views");
+        let userBalance = await dataStorage.allUsers.call(userContractAddress, {from: user});
+        assert.equal(userBalance["c"][0], 0, "User balance is empty before buying views");
 
-    //     let userContract = await User.at(userContractAddress);
-    //     userContract.buyViews({from: user, value: ether(1)});
+        let userContract = await User.at(userContractAddress);
+        userContract.buyViews({from: user, value: ether(1)});
 
-    //     let minterBalace = await minter.getBalance.call();
-    //     assert.equal(minterBalace["c"][0], 10000, "Minter balance increases with purchase of views");
+        let minterBalace = await minter.getBalance.call();
+        assert.equal(minterBalace["c"][0], 10000, "Minter balance increases with purchase of views");
 
-    //     let userBalanceAfter = await dataStorage.allUsers.call(userContractAddress, {from: user});
-    //     assert.equal(userBalanceAfter["c"][0], 99995, "Users balance is 1Eth in views(99 995 views)(5 views flat fee)");
-    //     console.log("User balance after buying");
-    //     console.log(userBalanceAfter["c"][0]);
+        let userBalanceAfter = await dataStorage.allUsers.call(userContractAddress, {from: user});
+        assert.equal(userBalanceAfter["c"][0], 99995, "Users balance is 1Eth in views(99 995 views)(5 views flat fee)");
 
-    //     userContract.sellViews(1000, {from: user});
-    //     let userBalanceAfterSelling = await dataStorage.allUsers.call(userContractAddress, {from: user});
-    //     console.log("User balance after selling views");
-    //     console.log(userBalanceAfterSelling["c"][0]);
-    // });
+        await userContract.sellViews(1000, {from: user});
+        let userBalanceAfterSelling = await dataStorage.allUsers.call(userContractAddress, {from: user});
+        assert.equal(userBalanceAfterSelling["c"][0], 98995, "User balence is less by 1 000 (98 995 views)(No fee for selling)");
+    });
 
-    it("(DS)(CCF)(CC)Create content creator", async () => {
+    /**
+      * The minter is not directly called here, but in order to successfully 
+      * buy views, the transaction has to pass through the minter. 
+      */
+    it("(DS)(M)(UF)(U)(CCF)(CC)Create content creator", async () => {
         await userFactory.createUser("Test001", {from: user});
         let userContractAddress = await userFactory.userAddresses(0);
 
         let userContract = await User.at(userContractAddress);
+        //using minter
+        await userContract.buyViews({from: user, value: ether(1)});
+        
+        await userContract.becomeContentCreator({from: user});
+        await contentCreatorFactory.creatorAddresses.call(0);
+        let isCreator = await dataStorage.isCreator.call(userContractAddress);
+       
+       assert.equal(isCreator, true, "Data storage recognises content creator address");
+    });
+
+    it("(DS)(M)(UF)(U)(CCF)(CC)Content creator set to user account", async () => {
+        await userFactory.createUser("Test001", {from: user});
+        let userContractAddress = await userFactory.userAddresses(0);
+
+        let userContract = await User.at(userContractAddress);
+        //using minter
         await userContract.buyViews({from: user, value: ether(1)});
         
         await userContract.becomeContentCreator({from: user});
         let ccContractAddress = await contentCreatorFactory.creatorAddresses.call(0);
         let ccContract = await ContentCreator.at(ccContractAddress);
-
-        let ownerAddress = await ccContract.owner();
         let userOwnerContractAddress = await ccContract.userContract();
-        let ccFactoryAddress = await ccContract.ccFactoryAddress();
-        let ccFactoryAddressFromDataStorage = await dataStorage.ccFactoryAddress.call();
+        let ownerAddress = await ccContract.owner();
 
         assert.equal(ownerAddress, userContractAddress, "ContentCreator is owned by user account");
-        assert.equal(userOwnerContractAddress, userContractAddress, "ContentCreator is set to the user account");
-        assert.equal(ccFactoryAddress, ccFactoryAddressFromDataStorage, "ContentCreatorFactory address is set");
+        assert.equal(userOwnerContractAddress, userContractAddress, "ContentCreator's userAccount owner set to  owner");
     });
 
-    // it("(DS)(CCF)(CC)Content Creator creating content", async () => {
-    //     await userFactory.createUser("Test001", {from: user});
-    //     let userContractAddress = await userFactory.userAddresses(0);
+    it("(DS)(M)(UF)(U)(CCF)(CC)Content creator has correct content creator factory", async() => {
+        await userFactory.createUser("Test001", {from: user});
+        let userContractAddress = await userFactory.userAddresses(0);
 
-    //     let userContract = await User.at(userContractAddress);
-    //     await userContract.buyViews({from: user, value: ether(1)});
+        let userContract = await User.at(userContractAddress);
+        //using minter
+        await userContract.buyViews({from: user, value: ether(1)});
+        
+        await userContract.becomeContentCreator({from: user});
+        let ccContractAddress = await contentCreatorFactory.creatorAddresses.call(0);
+        let ccContract = await ContentCreator.at(ccContractAddress);
+        let ccFactoryAddress = await ccContract.ccFactoryAddress.call();
+        let ccFactoryAddressFromDataStorage = await dataStorage.ccFactoryAddress.call();
+        let ccFacotryAddressDeplyed = await contentCreatorFactory.address;
 
-    //     await userContract.becomeContentCreator({from: user});
-    //     let ccContractAddress = await contentCreatorFactory.creatorAddresses.call(0);
-    //     let ccContract = await ContentCreator.at(ccContractAddress);
+        assert.equal(ccFactoryAddress, ccFacotryAddressDeplyed, "ContentCreatorFactory address is set");
+        assert.equal(ccFactoryAddressFromDataStorage, ccFacotryAddressDeplyed, "Data Storage contains correct content creator factory address");
+    });
 
-    //     await ccContractAddress.creatConent(
-    //         "0x999af54356fq51727979591caaf5309mt00033ql", 
-    //         "Test Content Title", 
-    //         "Test Content Description test test",
-    //         {fr}
-    //     )
+    it("(DS)(M)(CCF)(UF)(U)(CC)Content Creator creating content", async () => {
+        await userFactory.createUser("Test001", {from: user});
+        let userContractAddress = await userFactory.userAddresses(0);
 
-    //     assert.equal();
-    // });
+        let userContract = await User.at(userContractAddress);
+        await userContract.buyViews({from: user, value: ether(1)});
+
+        await userContract.becomeContentCreator({from: user});
+        let ccContractAddress = await contentCreatorFactory.creatorAddresses.call(0);
+        let ccContract = await ContentCreator.at(ccContractAddress);
+
+        await ccContract.createConent(
+            "0x999af54356fq51727979591caaf5309mt00033ql", 
+            "Test Content Title", 
+            "Test Content Description test test",
+            {from: userContractAddress}
+        )
+
+        let content = await dataStorage.getContent.call(ccContractAddress);
+        assert.equal(content[0], userContractAddress, "The user contract for the content is correct");
+        assert.equal(content[1], ccContractAddress, "The content creator address is correct");
+        assert.equal(content[3], "0x999af54356fq51727979591caaf5309mt00033ql", "IPFS address is correct");
+    });
 
      // let balance = dataStorage.allUsers.call(userContractTransaction);
         // assert.equal(balance, 0, "Users balance is empty");

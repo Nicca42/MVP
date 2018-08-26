@@ -83,20 +83,17 @@ contract ContentCreator {
       *     _description : The description or the 'About' for the content.
       * @return bool : If the minter created the content. 
       */
-    function creatConent( 
+    function createConent( 
         string _addressIPFS, 
         string _title, 
         string _description
         )
         public
-        payable
-        checkLock
         returns(bool)
     {
-        re
+        require(msg.sender == owner, "Sender must be owner contract");
         LoveMachine minter = LoveMachine(ccFactory.getMinter());
-        address(minter).transfer(msg.value);
-        return minter.createContentMinter(_addressIPFS, _title, _description);
+        return minter.createContentMinter(owner, _addressIPFS, _title, _description);
     }
     
     /**

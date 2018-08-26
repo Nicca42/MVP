@@ -30,12 +30,14 @@ contract DataStorage {
     string[] public usersNames;//userNames
     uint public moderatorViews;
     struct Content {
+        address userOwner;
         address creator;
         string contentLocationIPFS;
         string title;
         string description;
         uint views;
     }
+
     Content[] public allContent;
     mapping (address => Content[]) public creatorContent;//ccc to array of content
     uint private totalViewCreated;
@@ -840,6 +842,7 @@ contract DataStorage {
       *     transfer.
       */
     function createContent(
+        address _userContract,
         address _contentCreatorContract, 
         string _addressIPFS, 
         string _title, 
@@ -847,14 +850,11 @@ contract DataStorage {
         )
         public
         onlyMinter(1)
+        lockCheck(_userContract)
         stopInEmergency
         pauseFunction
     {
-        creatorContent[_contentCreatorContract].push(Content({creator: _contentCreatorContract,
-        contentLocationIPFS: _addressIPFS,
-        title: _title,
-        description: _description,
-        views: 0}));
+        lockUser(_userContract);
         //reducing balance of content creator
         require(allCreators[_contentCreatorContract] > 5);
         allCreators[_contentCreatorContract] -= 5;
@@ -862,7 +862,16 @@ contract DataStorage {
         
         addToModeratorFund(_contentCreatorContract, 5);
         
+        creatorContent[_contentCreatorContract].push(Content({
+            userOwner: _userContract,
+            creator: _contentCreatorContract,
+            contentLocationIPFS: _addressIPFS,
+            title: _title,
+            description: _description,
+            views: 0
+        }));
         allContent.push(Content({
+            userOwner: _userContract,
             creator: _contentCreatorContract,
             contentLocationIPFS: _addressIPFS,
             title: _title,
@@ -870,26 +879,53 @@ contract DataStorage {
             views: 0
         })); 
         //for front end to have access to lates and all content
-        emit LogContentCreated(allContent.length, _title, _contentCreatorContract);
         //For the indervidual conent creators to be able to claim ownership of content
-        uint length = creatorContent[_contentCreatorContract].length;
-        creatorContent[_contentCreatorContract][length] = Content({
-            creator: _contentCreatorContract,
-            contentLocationIPFS: _addressIPFS,
-            title: _title,
-            description: _description,
-            views: 0
-        });
+        // uint length = creatorContent[_contentCreatorContract].length;
+        // creatorContent[_contentCreatorContract][length] = Content({
+        //     userOwner: _userContract,
+        //     creator: _contentCreatorContract,
+        //     contentLocationIPFS: _addressIPFS,
+        //     title: _title,
+        //     description: _description,
+        //     views: 0
+        // });
         
-        Content[] storage temp = creatorContent[_contentCreatorContract];
-        temp.push(Content({
-            creator: _contentCreatorContract,
-            contentLocationIPFS: _addressIPFS,
-            title: _title,
-            description: _description,
-            views: 0
-        }));
+        // Content[] storage temp = creatorContent[_contentCreatorContract];
+        // temp.push(Content({
+        //     userOwner: _userContract,
+        //     creator: _contentCreatorContract,
+        //     contentLocationIPFS: _addressIPFS,
+        //     title: _title,
+        //     description: _description,
+        //     views: 0
+        // }));
+
+        emit LogContentCreated(allContent.length, _title, _contentCreatorContract);
+
+        unlockUser(_userContract);
     }    
+
+    function getContent(address _ccc)
+        public
+        view
+        returns(
+            address userContractAddress,
+            address cCCAddress, 
+            string addressIPFS, 
+            string title, 
+            string description,
+            uint views
+        )
+    {
+        uint latestContent = creatorContent[_ccc].length;
+
+        userContractAddress = creatorContent[_ccc][latestContent].userOwner;
+        cCCAddress = creatorContent[_ccc][latestContent].creator;
+        addressIPFS = creatorContent[_ccc][latestContent].contentLocationIPFS;
+        title = creatorContent[_ccc][latestContent].title;
+        description = creatorContent[_ccc][latestContent].description;
+        views = creatorContent[_ccc][latestContent].views;
+    }
     
     /**
       * @dev Checks the uniqueness of a userName. 

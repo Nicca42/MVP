@@ -218,16 +218,16 @@ contract LoveMachine {
       * @return bool : If the transaction was successful. 
       */
     function createContentMinter(
+        address _owner,
         string _addressIPFS, 
         string _title, 
         string _description
         ) 
         public
-        payable
         onlyACreator
         returns(bool)
     {
-        dataStorage.createContent(msg.sender, _addressIPFS, _title, _description);
+        dataStorage.createContent(_owner, msg.sender, _addressIPFS, _title, _description);
         return true; 
     }
 

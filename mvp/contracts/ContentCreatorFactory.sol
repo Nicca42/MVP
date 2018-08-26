@@ -135,7 +135,7 @@ contract ContentCreatorFactory {
         address ccc = new ContentCreator(msg.sender, this);
         creatorAddresses.push(ccc);
         
-        // dataStorage.setNewCreatorData(msg.sender, ccc);
+        dataStorage.setNewCreatorData(msg.sender, ccc);
         emit LogContentCreator(msg.sender, this);
         return ccc;
     }
