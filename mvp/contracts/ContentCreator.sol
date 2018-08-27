@@ -92,14 +92,14 @@ contract ContentCreator {
         string _description
         )
         public
-        returns(bool)
+        // returns(bool)
     {
         //require(msg.sender == owner, "Sender must be owner contract");
         emit LogIsUser("In ccc before calling love machine", false);
         LoveMachine minter = LoveMachine(ccFactory.getMinter());
         bool finished = minter.createContentMinter(owner, _addressIPFS, _title, _description);
-        emit LogIsUser("In ccc after love machine has been called", true);
-        return finished;
+        // emit LogIsUser("In ccc after love machine has been called", true);
+        // return finished;
     }
     
     /**

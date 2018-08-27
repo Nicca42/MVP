@@ -10,7 +10,7 @@ contract ContentCreatorFactory {
     Register register;
     address dataStorageAddress;
     address registerAddress;
-    address owner;
+    address public owner;
     address[] public creatorAddresses;
 
     bool public emergencyStop = false;

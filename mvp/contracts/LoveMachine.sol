@@ -214,7 +214,7 @@ contract LoveMachine {
         string _description
         ) 
         public
-        onlyACreator
+        // onlyACreator
         returns(bool)
     {
         emit LogIsUser("Creating contnet, love machine calling ds", false);

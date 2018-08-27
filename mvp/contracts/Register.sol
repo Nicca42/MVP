@@ -98,13 +98,13 @@ contract Register {
     {
         if(_newUserFactory != backendUserFactory) {
             
-        emit LogNewContract(_newUserFactory, backendUserFactory);
-        
-        previousUserFactories.push(backendUserFactory);
-        // userFactory.kill(backendUserFactory);
-        backendUserFactory = _newUserFactory;
-        userFactory = UserFactory(backendUserFactory);
-        // dataStorage.registryUpdateUserFactory(backendUserFactory);
+            emit LogNewContract(_newUserFactory, backendUserFactory);
+            
+            previousUserFactories.push(backendUserFactory);
+            // userFactory.kill(backendUserFactory);
+            backendUserFactory = _newUserFactory;
+            userFactory = UserFactory(backendUserFactory);
+            // dataStorage.registryUpdateUserFactory(backendUserFactory);
             return true;
         }
         return false;
@@ -131,7 +131,7 @@ contract Register {
       */
     function changeContentCreatorFactory(address _newContentCreatorFactory) 
         public
-        onlyOwner()
+        // onlyOwner()
         stopInEmergency
         pauseFunction
         returns(bool) 
@@ -144,10 +144,10 @@ contract Register {
             );
             
             previousContentCreatorFactories.push(backendUserFactory);
-            ccFactory.kill(backendMinter);
+            // ccFactory.kill(backendMinter);
             backendContentCreatorFactory = _newContentCreatorFactory;
             ccFactory = ContentCreatorFactory(backendContentCreatorFactory);
-            dataStorage.registryUpdateCCFactory(backendContentCreatorFactory);
+            // dataStorage.registryUpdateCCFactory(backendContentCreatorFactory);
             return true;
         }
         return false;
@@ -174,7 +174,7 @@ contract Register {
       */
     function changeMinter(address _newMinter) 
         public
-        onlyOwner()
+        // onlyOwner()
         stopInEmergency
         pauseFunction
         returns(bool) 
@@ -184,10 +184,10 @@ contract Register {
             emit LogNewContract(_newMinter, backendMinter);
             
             previousMinters.push(backendMinter);
-            ccFactory.kill(_newMinter);
+            // ccFactory.kill(_newMinter);
             backendMinter = _newMinter;
             minter = LoveMachine(backendMinter);
-            dataStorage.registryUpdateMinter(backendMinter);
+            // dataStorage.registryUpdateMinter(backendMinter);
             return true;
         }
         return false;

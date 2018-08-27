@@ -60,7 +60,8 @@ contract DataStorage {
     event LogUserDeleted(address owner, address userContract, string userName);
     event LogCreatorCreated(address userCOwner, address creatorContract);
     event LogCreatorDeleted(address userContract, address creatorContract);
-    event LogContentCreated(uint indexed position, string indexed title, address indexed creator);
+    event LogContentCreated(uint position, string title, address creator);
+    // event LogContentCreated(uint indexed position, string indexed title, address indexed creator);
     event LogCheckingData(address userContract);
     
     //Ensures the user can still withdraw during an emergency.
@@ -903,7 +904,7 @@ contract DataStorage {
             uint views
         )
     {
-        uint latestContent = creatorContent[_ccc].length;
+        uint latestContent = creatorContent[_ccc].length-1;
 
         userContractAddress = creatorContent[_ccc][latestContent].userOwner;
         cCCAddress = creatorContent[_ccc][latestContent].creator;
