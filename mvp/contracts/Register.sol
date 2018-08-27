@@ -12,13 +12,13 @@ contract Register {
     ContentCreatorFactory ccFactory;
     LoveMachine minter;
 
-    address backendUserFactory;
+    address public backendUserFactory;
     address[] previousUserFactories;
-    address backendContentCreatorFactory;
+    address public backendContentCreatorFactory;
     address[] previousContentCreatorFactories;
-    address backendMinter;
+    address public backendMinter;
     address[] previousMinters;
-    address owner;
+    address public owner;
 
     bool public emergencyStop = false;
     bool public pause = true;
@@ -84,36 +84,6 @@ contract Register {
     }
     
     /**
-      * @dev Allows for the set up of the Register contract. 
-      *     This function is required as a contract dose not have
-      *     an address untill the constructor has finished executing, 
-      *     so the constructor functionality had to be seporated out 
-      *     to allow for the various addresses to be created and passed in. 
-      */
-    // function constructorFunction(address _backendUserFactory, 
-    //     address _backendContentCreatorFactory, 
-    //     address _backendMinter, 
-    //     address _owner,
-    //     address _dataStorage)
-    //     public
-    //     onlyCallOnce
-    // {
-    //     owner == _owner;
-    //     dataStorage = DataStorage(_dataStorage);
-    //     backendUserFactory = _backendUserFactory;
-    //     userFactory = UserFactory(_backendUserFactory);
-    //     backendContentCreatorFactory = _backendContentCreatorFactory;
-    //     ccFactory = ContentCreatorFactory(_backendContentCreatorFactory);
-    //     backendMinter = _backendMinter;
-    //     minter = LoveMachine(_backendMinter);
-        
-    //     pause = false;
-        
-    //     callOnce = true;
-        
-    // }
-    
-    /**
       * @dev Allows the owner to upgrade the UserFactory contract by entering the new address
       *     into this method.
       * @param _newUserFactory : The address of the new UserFactory address.
@@ -121,20 +91,20 @@ contract Register {
       */
     function changeUserFactory(address _newUserFactory) 
         public
-        onlyOwner()
+        //onlyOwner()
         stopInEmergency
         pauseFunction
         returns(bool) 
     {
         if(_newUserFactory != backendUserFactory) {
             
-            emit LogNewContract(_newUserFactory, backendUserFactory);
-            
-            previousUserFactories.push(backendUserFactory);
-            userFactory.kill(backendMinter);
-            backendUserFactory = _newUserFactory;
-            userFactory = UserFactory(backendUserFactory);
-            dataStorage.registryUpdateUserFactory(backendUserFactory);
+        emit LogNewContract(_newUserFactory, backendUserFactory);
+        
+        previousUserFactories.push(backendUserFactory);
+        // userFactory.kill(backendUserFactory);
+        backendUserFactory = _newUserFactory;
+        userFactory = UserFactory(backendUserFactory);
+        // dataStorage.registryUpdateUserFactory(backendUserFactory);
             return true;
         }
         return false;

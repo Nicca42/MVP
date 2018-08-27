@@ -89,10 +89,10 @@ contract DataStorage {
     }
     
     //Ensures only the owner can call the function 
-    modifier onlyAUser(address _userAddress) {
-        require(allUsers[_userAddress] != 0, "Address is not a user address.");
-        _;
-    }
+    // modifier onlyAUser(address _userAddress) {
+    //     require(allUsers[_userAddress] != 0, "Address is not a user address.");
+    //     _;
+    // }
     
     //Ensures only the ContentCreatorFactory can call
     //the function. Calls from register so that the most 
@@ -126,6 +126,7 @@ contract DataStorage {
     
     //Ensures the user is not making another state change. 
     modifier lockCheck(address _user) {
+        // require(isUser(_user), "User must be registed");
         User u = User(_user);
         bool lock = u.getLock();
         require(!lock, "Contract currently locked. Please wait.");
@@ -136,17 +137,6 @@ contract DataStorage {
         }
         _;
     }
-    
-    //Ensures the _userName is unique. 
-    // modifier uniqueUserName(string _userName) {
-    //     for(uint i = 0; i < usersNames.length; i++){
-    //         require(
-    //             keccak256(_userName) != keccak256(usersNames[i]), 
-    //             "UserName has to be unique."
-    //         );
-    //     }
-    //     _;
-    // }
     
     //Ensures the user has no more views before they get deleted. 
     modifier beforeDeleteChecksUser(address _userContract) {
@@ -177,15 +167,6 @@ contract DataStorage {
         public
     {
         owner = msg.sender;    
-        // ccFactoryAddress = new ContentCreatorFactory();
-        // userFactoryAddress = new UserFactory();
-        // minterAddress = new LoveMachine();
-        // registryAddress = new Register();
-        
-        // ccf = ContentCreatorFactory(ccFactoryAddress);
-        // uf = UserFactory(userFactoryAddress);
-        // m = LoveMachine(minterAddress);
-        // registry = Register(registryAddress);
     }
     
     /**
@@ -214,24 +195,46 @@ contract DataStorage {
         minterAddress = _minterAddress;
         registry = Register(_register);
         
-        // ccf.constructorFunction(this);
-        // uf.constructorFunction(this, owner, ccFactoryAddress);
-        // m.constructorFunction(this);
-        // registry.constructorFunction(
-        //     userFactoryAddress,
-        //     ccFactoryAddress,
-        //     minterAddress,
-        //     owner,
-        //     this
-        // );
-        
         setPause(false);
         
         emit LogSetUp(_userFactoryAddress, _ccFactoryAddress, _minterAddress, _register);
         
         return true;
     }
+
+    /**
+      * @param _userAddress : The address of the user 
+      *     that is being checked as a creator. 
+      * @return bool : Wether they are a creator or not.      
+      */
+    function isCreator(address _userAddress)
+        public
+        view
+        returns(bool)
+    {
+        if(creatorsContractOwners[_userAddress] != 0) {
+            return true;
+        }
+        return false;
+    }
     
+    /**
+      * @param _addressToCheck : The address to be checked. 
+      * @return bool : Wether the address is a user. 
+      */
+    function isUser(address _addressToCheck)
+        public
+        view
+        returns(bool)
+    {
+        if(userContractOwners[_addressToCheck] != 0) {
+            return true;
+        }
+        return false;
+    }
+    
+    event LogIsUser(string usedIn, bool passed);
+    //TO REMOVE
     /**
       * @dev Locks the user so that no other state changes
       *     for that user may occur at the same time, thus preventing reentry attacks 
@@ -246,7 +249,6 @@ contract DataStorage {
       */
     function lockUser(address _user) 
         private
-        //onlyAUser(_user)
         pauseFunction
     {
         User u;
@@ -268,7 +270,6 @@ contract DataStorage {
       */
     function unlockUser(address _user)
         private
-        //onlyAUser(_user)
         pauseFunction
     {
         User u;
@@ -280,6 +281,28 @@ contract DataStorage {
         }
     }
     
+    /**
+      * @return address : The address of the minter.
+      */
+    function getUserFactory()
+        public
+        view
+        returns(address)
+    {
+        return registry.getUserFactory();
+    }
+
+    /**
+      * @return address : The address of the minter.
+      */
+    function getCCFactory()
+        public
+        view
+        returns(address)
+    {
+        return registry.getContentCreatorFactory();
+    }
+
     /**
       * @return address : The address of the minter.
       */
@@ -334,39 +357,8 @@ contract DataStorage {
         view
         returns(string)    
     {
-        string userName = allUserNames[_user];
-        return(userName);
-    }
-    
-    /**
-      * @param _userAddress : The address of the user 
-      *     that is being checked as a creator. 
-      * @return bool : Wether they are a creator or not.      
-      */
-    function isCreator(address _userAddress)
-        public
-        view
-        returns(bool)
-    {
-        if(creatorsContractOwners[_userAddress] != 0) {
-            return true;
-        }
-        return false;
-    }
-    
-    /**
-      * @param _addressToCheck : The address to be checked. 
-      * @return bool : Wether the address is a user. 
-      */
-    function isUser(address _addressToCheck)
-        public
-        view
-        returns(bool)
-    {
-        if(userContractOwners[_addressToCheck] != 0) {
-            return true;
-        }
-        return false;
+        //require(isUser(_user));
+        return(allUserNames[_user]);
     }
     
     /**
@@ -547,12 +539,12 @@ contract DataStorage {
       */
     function setNewUserData(address _user, address _userContract, string _userName)
         public 
-        //onlyUserFactory
-        //lockCheck(_userContract)
-        //stopInEmergency
-        //pauseFunction
+        onlyUserFactory
+        lockCheck(_userContract)
+        stopInEmergency
+        pauseFunction
     {
-        //lockUser(_userContract);
+        lockUser(_userContract);
         
         allUsers[_userContract] = 0;
         allUserNames[_userContract] = _userName;
@@ -562,7 +554,7 @@ contract DataStorage {
         
         emit LogUserCreated(_user, _userContract, _userName);
         
-        //unlockUser(_userContract);
+        unlockUser(_userContract);
     }
     
     /** 
@@ -596,12 +588,6 @@ contract DataStorage {
                 break;
             }
         }
-        // for(uint a = 0; a < usersNames.length; a++) {
-        //     if(keccak256(usersNames[a]) == keccak256(_userName)) {
-        //         delete usersNames[a];
-        //         break;
-        //     }
-        // }
         
         emit LogUserDeleted(_user, _userContract, _userName);
         
@@ -849,14 +835,14 @@ contract DataStorage {
         string _description
         )
         public
-        onlyMinter(1)
+        //onlyMinter(1)
         lockCheck(_userContract)
         stopInEmergency
         pauseFunction
     {
         lockUser(_userContract);
         //reducing balance of content creator
-        require(allCreators[_contentCreatorContract] > 5);
+        //require(allCreators[_contentCreatorContract] > 5);
         allCreators[_contentCreatorContract] -= 5;
         moderatorViews += 5;
         
@@ -926,28 +912,6 @@ contract DataStorage {
         description = creatorContent[_ccc][latestContent].description;
         views = creatorContent[_ccc][latestContent].views;
     }
-    
-    /**
-      * @dev Checks the uniqueness of a userName. 
-      * @param _userName : The userName to be checked. 
-      * @return bool : Wether the user name is unique or 
-      *     not.
-      */
-    // function isUnique(string _userName)
-    //     public
-    //     view
-    //     returns(bool)
-    // {
-    //     for(uint i = 0; i < usersNames.length; i++){
-    //         if(
-    //             keccak256(_userName) != keccak256(usersNames[i])) 
-    //         {
-    //         } else {
-    //             return false;
-    //         }
-    //     }
-    //     return true;
-    // }
 
     /**
       * @dev This function allows the register to replace itself. 

@@ -76,6 +76,9 @@ contract ContentCreator {
         ccFactory = ContentCreatorFactory(_contentCreatorFactory);
     }
     
+    event LogIsUser(string usedIn, bool passed);
+    //TO REMOVE
+
     /**
       * @dev This allows the content creator to create content. 
       * @param _addressIPFS : The address of the content in IPFS. 
@@ -91,9 +94,12 @@ contract ContentCreator {
         public
         returns(bool)
     {
-        require(msg.sender == owner, "Sender must be owner contract");
+        //require(msg.sender == owner, "Sender must be owner contract");
+        emit LogIsUser("In ccc before calling love machine", false);
         LoveMachine minter = LoveMachine(ccFactory.getMinter());
-        return minter.createContentMinter(owner, _addressIPFS, _title, _description);
+        bool finished = minter.createContentMinter(owner, _addressIPFS, _title, _description);
+        emit LogIsUser("In ccc after love machine has been called", true);
+        return finished;
     }
     
     /**

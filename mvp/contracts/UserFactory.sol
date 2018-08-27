@@ -70,17 +70,6 @@ contract UserFactory {
         ccFactory = ContentCreatorFactory(_ccFactory);
     }
     
-    // function constructorFunction(address _dataStorage, address _owner, address _ccFactory)
-    //     public
-    //     onlyCallOnce
-    // {
-    //     owner = _owner;
-    //     dataStorageAddress = _dataStorage;
-    //     dataStorage = DataStorage(_dataStorage);
-    //     ccFactory = ContentCreatorFactory(_ccFactory);
-    //     callOnce = true;
-    // }
-    
     
     /**
       * @return address : The address of the current LoveMahcine.
@@ -149,16 +138,15 @@ contract UserFactory {
       */
     function createUser(string _userName) 
         public 
-        // stopInEmergency
-        // pauseFunction
-        // returns(address) 
+        stopInEmergency
+        pauseFunction
+        returns(address) 
     {
-        //require(dataStorage.isUnique(_userName), "The user name is not unique.");
         address newUser = new User(msg.sender, _userName);
         userAddresses.push(newUser);
         dataStorage.setNewUserData(msg.sender, newUser, _userName);
         
-        // return newUser;
+        return newUser;
     }
     
     function deleteUserFinal(address _contractAddress)
@@ -169,14 +157,13 @@ contract UserFactory {
     {
         require(msg.sender == _contractAddress);
         string memory _userName = dataStorage.getAUsersName(_contractAddress);
-        require(keccak256(_userName) != keccak256(""));
         
         //TODO: call minter to send remaining views to contract creator
 
         dataStorage.removeUserData(
             dataStorage.getAUsersOwnerData(_contractAddress), 
             _contractAddress,
-            dataStorage.getAUsersNameData(_contractAddress));
+            _userName);
             
             //TODO: needs to check if user is a creator and delete creator too
         return true;
@@ -184,13 +171,8 @@ contract UserFactory {
 
     function kill(address _minter) 
         public 
-        ownerOrRegister 
+        //ownerOrRegister 
     {
         selfdestruct(_minter);
-        //v2 could just have a 
-        //bool death private;
-        //that needs 
-        //to be false and when its set to true the contract 
-        //is dead.
     }
 }
