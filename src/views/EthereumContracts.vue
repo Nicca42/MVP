@@ -1,17 +1,17 @@
 <template>
   <div class="EthereumContracts">
-    <SimpleStorage/>
+    // <SimpleStorage/>
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
-import SimpleStorage from '@/components/SimpleStorage.vue'
+// import SimpleStorage from '@/components/SimpleStorage.vue'
 
 export default {
   name: 'EthereumContracts',
   components: {
-    SimpleStorage
+    // SimpleStorage
   }
 }
 </script>

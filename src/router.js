@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import Home from './views/Home.vue'
 import EthereumContracts from './views/EthereumContracts.vue'
 import IPFSExamples from './views/IPFSExamples.vue'
+import CreateUser from './views/CreateUser.vue'
 
 Vue.use(Router)
 
@@ -22,6 +23,11 @@ export default new Router({
             path: '/IPFSExamples',
             name: 'IPFSExamples',
             component: IPFSExamples
+        },
+        {
+            path: '/CreateUser',
+            name: 'CreateUser',
+            component: CreateUser
         },
     ]
 })
