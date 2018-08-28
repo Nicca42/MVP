@@ -13,8 +13,8 @@
         <el-col :span="24">
           <router-link to="/">Home</router-link> |
           <router-link to="/EthereumContracts">Ethereum Contracts </router-link> |
-          <router-link to="/IPFSExamples">IPFS Examples</router-link> |
-          <router-link to="/CreateUser">Create User</router-link>
+          <router-link to="/UploadContent">Upload Content</router-link> |
+          <router-link to="/CreateUser">Become User</router-link>
         </el-col>
       </el-row>
     </div>
