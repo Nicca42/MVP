@@ -234,6 +234,7 @@ contract DataStorage {
         }
         return false;
     }
+    
     /**
       * @dev Locks the user so that no other state changes
       *     for that user may occur at the same time, thus preventing reentry attacks 
