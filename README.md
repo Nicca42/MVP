@@ -50,6 +50,12 @@ For this project my focus was learning Solidity, which means there is little int
 The system has (in its current state) two main users:
 The consumer, referred to as the user and
 The creator.
+The systems structure is structured so that the user never has direct access to writing to the dataStorage as can be seen below. 
+<p align="center">  
+  <img
+   src="https://github.com/Nicca42/MVP/blob/master/img/systemArchitecture.png" alt="Sequence Diagram of User creation"/>
+  <br>
+</p>
 
 ### Use Case
 The user first loads the web front end, and becomes a user via entering their desired username. The username and their wallet address gets sent to the UserFactory. The UserFactory then spawns a userContract and sends the information to the dataStorage. 
