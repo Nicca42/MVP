@@ -4,7 +4,6 @@
     <CreateUserTable/>
   </div>
 </template>
-
 <script>
 // @ is an alias to /src
 import CreateUserTable from '@/components/CreateUserTable.vue'
