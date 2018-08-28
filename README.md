@@ -34,14 +34,6 @@ In future versions when payment channels, or side-chains come into being reliabl
 ### No More Adds
 In MVP there are no adds as the content creators make their income from people liking, loving, or fan loving their content in the native currency of views. Views are completely locked into the system, and can never be sent to an external wallet or address. This is because these views are directly linked to Ether value in the LoveMachine.sol (minter). 
 
-### Moderators
-In a future version of MPN (as it was out of current scope) the moderator functionality will be completed, allowing for moderators to rate content, their creators, and flag content. The flagging allows for a specific tag to be placed on the content, either flagging it as 18+ content, R rated content, or to be removed (hate speech, encouraging violence etc). These moderators are paid for their work by the `moderatorFund`. This fund is sponsored by: 
-    The creation of a content creator.
-    The buying of views (not selling).
-    The uploading of new content. 
-
-This allows for content consumers to only view from creators who have been flagged as Safe or PG13 etc. This level of control can prevent disturbing content from polluting younger users but allows for much more freedom of speech than YouTube currently allows, enabling a much larger audience with a much more secure way of viewing safe content. 
-
 ## Notes Before We Jump In
 This is the first dApp I have ever created, and my first time playing with this technology stack. As such there are still bugs and this system is nowhere near complete. For this submission I tried to enable the base functionality so that a basic understanding of the system can be portrayed. 
 For this project my focus was learning Solidity, which means there is little integration with the other technologies and tools, and alot of focus on the contracts. As a result of this I have learnt an incredible amount about Solidity and its specific quirks. I have thoroughly enjoyed learning Solidity and would deeply appreciate consideration for hiring, despite the lack of an extensive technology stack. 
@@ -81,9 +73,32 @@ There where many tricky desisions made for this, and information about this can 
 ## Future functionality
 I would like to build this out into an actual mvp/product as I think it's impact is only limited to the size of ones imagination. 
 Future improvements include:
-1. Moderators
-    Moderators have a normal user account. They cannot be creators. They must be over 18 and have NSFW enabled in settings, as there is     no guarantee as to what they will see. They will first view content a normal user has flagged as remove (as these are probably the       most needed to be removed) and then filter down sevarity to R then 18+ etc.  
-2. Content Types
+
+### 1. Moderators
+Moderators have a normal user account. They cannot be creators. They must be over 18 and have NSFW enabled in settings, as there is no guarantee as to what they will see. They will first view content a normal user has flagged as remove (as these are probably the most needed to be removed) and then filter down sevarity from R then 18+, PG16 etc.  
+In a future version of MVP (as it was out of current scope) the moderator functionality will be completed, allowing for moderators to rate content, their creators, and flag content. The moderators themselves will not be allowed to create content. The flagging allows for a specific tag to be placed on the content, either flagging it as 18+ content, R rated content, PG16, PG13, Family safe etc, or to be removed (hate speech, encouraging violence etc). These flags will be converted to the videos catagory after it has gone through the wannabes. These moderators are paid for their work by the `moderatorFund`. This fund is sponsored by: 
+    The creation of a content creator.
+    The buying of views (not selling).
+    The uploading of new content. 
+
+As this funds funding is heavily limited there will be more users wanted to get paid to moderate
+then there will be funds to pay moderators. These users can still contribute to the system while
+they wait for a position. These users can sign up to be wannabes. 
+
+<p align="center">  
+  <img src="https://github.com/Nicca42/MVP/blob/master/img/Moderator%20further%20explained.JPG" alt="Moderator and wannabes explained"/>
+  <br>
+</p>
+Wannabes moderaters will moderate already moderated content. Every time they moderate a like of views (5 views) in their account is frozen. Then many other wannabes (proportional to the total number of wannabes)(with a time limit on the contents wannabe moderation) will also "moderate" the content. Once a two third majority is gained for a particulare catagory (disgard being a catagory) the content is the catagorized. These videos can all be in circulation but will only leave the 18+ catagory after moderation. The wannabes who voted the way of the majority will be awarded a moderator point. The wannabe with the most moderator points will become a moderator when a moderator gets removed (having more than 3 instances where their moderation was not the same as the wannabe consensys), or when a new moderator position gets created due to a spike in content creatrion. 
+
+<p align="center">  
+  <img src="https://github.com/Nicca42/MVP/blob/master/img/Moderator%20accounts.JPG" alt="Moderator and wannabes explained"/>
+  <br>
+</p>
+
+This allows for content consumers to only view from creators who have been flagged as Safe or PG13 etc. This level of control can prevent disturbing content from polluting younger users but allows for much more freedom of speech than YouTube currently allows, enabling a much larger audience with a much more secure way of viewing safe content. 
+
+### 2. Content Types
     In future itterations I would like to unlimit the content types. Allowing videos, pictures, votes and polls, blogs, and anything        else I can think of. I want it to be a platform where everyone is included, the audience has control over what they do and do not        want to see without creating eco chambers, and there is no limit on conent. 
     
 Thank you for your time.

@@ -1,5 +1,37 @@
 # Design Pattern Decisions
 
+## Overview
+When I first designed this project it was vastly different to how it is now, and probably vastly different from its final form. There where many steps in this planning process. 
+Contract planning:
+<p align="center">  
+  <img
+   src="https://github.com/Nicca42/MVP/blob/master/img/MVPContractStructureCompleate.JPG" alt="Contract structure"/>
+  <br>
+</p>
+<p align="center">  
+  <img
+   src="https://github.com/Nicca42/MVP/blob/master/img/ContractPlanning.JPG" alt="Contract structure"/>
+  <br>
+</p>
+<p align="center">  
+  <img
+   src="https://github.com/Nicca42/MVP/blob/master/img/MVP%20Contract%20structure.JPG" alt="Contract structure"/>
+  <br>
+</p>
+The UI on the other hand is behind where it was planned to be:
+
+<p align="center">  
+  <img src="https://github.com/Nicca42/MVP/blob/master/img/UI%20First%20design.JPG" alt="Moderator and wannabes explained"/>
+  <br>
+</p>
+
+The contracts are disigned with absolute moderlization and upgradibility as well as moduralization
+
+<p align="center">  
+  <img src="https://github.com/Nicca42/MVP/blob/master/img/HighLevelOverviewOfMVP.JPG" alt="Moderator and wannabes explained"/>
+  <br>
+</p>
+
 This project implements upgradability, as can be seen by the complete separation of dataStorage and data manipulation. 
 The system is designed so that endpoints (user and creator) have no access to writing to storage at any time. 
 
@@ -22,19 +54,19 @@ None of the contract (with the exception of User and Creator) store other contra
 ## Separation of Concerns
 This system is very modular, and each contract has a very specific job. 
 
-  `DataStorage.sol` : To store all data, 
-                      all data changes,
-                      has specific modifiers to restrict access to functions intended for specific contracts
-  `Register.sol`    : Updating contracts
-  `UserFacotry.sol` : Creating new users 
-                      Acting as access point for users
-  `ContentCreatorFacotry.sol` : Creating new creators
-                                Access point for creators
-  `LoveMachine.sol` : Allows for any value transfers
-  `User.sol` : Gives access to system
-               Allows for user functionality
-  `ContentCreator.sol` : Allowing for content creation
-                         Contains all content views (from likes, loves and fan loves)
+  `DataStorage.sol`       : To store all data, 
+                            all data changes,
+                            has specific modifiers to restrict access to functions intended for     specific contracts
+`Register.sol`            : Updating contracts
+`UserFacotry.sol`         : Creating new users 
+                            Acting as access point for users
+`ContentCreatorFacotry.sol` : Creating new creators
+                            Access point for creators
+`LoveMachine.sol`         : Allows for any value transfers
+`User.sol`                : Gives access to system
+                            Allows for user functionality
+`ContentCreator.sol`      : Allowing for content creation
+                            Contains all content views (from likes, loves and fan loves)
 
 ## Mutexes
 I used mutexes in the data storage in order to prevent a user or content creator from reentry attacks. See more in avoiding attacks documentation. 

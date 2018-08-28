@@ -1,8 +1,19 @@
 # Avoiding Common Attacks
 
+## Test
+I did comprehensive tests on my contracts, but as the system is rather complex, the tests overlap and test multiple contracts in each test. To make this easier I created a table of test compleated and what contracts they test either indirectly or directly.
+
+<p align="center">  
+  <img
+   src="https://github.com/Nicca42/MVP/blob/master/img/testing.PNG" alt="User Lock"/>
+  <br>
+</p>
+If you would like to check that each contract is in fact being tested I recoment useing remix to step through the transactions code calls. 
+
 ## Mutexes 
 I uses mutexes to lock both the user and (if they have one) their linked creator account so that it prevents agains reentry. 
 This is how i lock a user: 
+
 <p align="center">  
   <img
    src="https://github.com/Nicca42/MVP/blob/master/img/LockUser.PNG" alt="User Lock"/>
