@@ -606,7 +606,8 @@ contract DataStorage {
         returns(address)
     {
         return userWalletsToUserContracts[_userWallet];
-    }    
+    } 
+       
     /**
       * @dev This allows a new creator to be finalized and stored.
       * @notice The 'transaction fee' of a like (5 views) is taken 
@@ -624,10 +625,10 @@ contract DataStorage {
         pauseFunction
         returns(bool)
     {
-        // require(
-        //     allUsers[_userContract] > 5, 
-        //     "You need to be able to like your own stuff."
-        // );
+        require(
+            allUsers[_userContract] > 5, 
+            "You need to be able to like your own stuff."
+        );
         allUsers[_userContract] -= 5;
         moderatorViews += 5;
         
