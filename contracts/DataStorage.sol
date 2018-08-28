@@ -24,6 +24,7 @@ contract DataStorage {
     mapping (address => uint) public allCreators;//creatorContract to views
     mapping (address => string) public allUserNames;//user contract address to userName
     mapping (address => address) public userContractOwners;//userContract add to user add ress
+    mapping (address => address) public userWalletsToUserContracts;//user wallets to user contract address
     mapping (address => address) public creatorsContractOwners;//userContract to creatorContract
     address[] public usersAddresses;//contract addresses
     address[] public creatorsAddresses;//creators contract addresses
@@ -233,9 +234,6 @@ contract DataStorage {
         }
         return false;
     }
-    
-    event LogIsUser(string usedIn, bool passed);
-    //TO REMOVE
     /**
       * @dev Locks the user so that no other state changes
       *     for that user may occur at the same time, thus preventing reentry attacks 
@@ -550,6 +548,7 @@ contract DataStorage {
         allUsers[_userContract] = 0;
         allUserNames[_userContract] = _userName;
         userContractOwners[_userContract] = _user;
+        userWalletsToUserContracts[_user] = _userContract;
         usersAddresses.push(_userContract);
         usersNames.push(_userName);
         
@@ -577,12 +576,10 @@ contract DataStorage {
         pauseFunction
         returns(bool)
     {
-        //function is called through the user factory, but the account should 
-            //have all funds sent to their users wallets. 
-        //TODO: delete creator content as well. 
         delete allUsers[_userContract];
         delete allUserNames[_userContract];
         delete userContractOwners[_userContract];
+        delete userWalletsToUserContracts[_user];
         for(uint i = 0; i < usersAddresses.length; i++) {
             if(usersAddresses[i] == _userContract) {
                 delete usersAddresses[i];
@@ -594,7 +591,21 @@ contract DataStorage {
         
         return true;
     }
-    
+
+    /**
+      * @dev This is to allow the front end to gain access to the 
+      *     users contract by entering their wallet. 
+      * @param _userWallet : The address of the user wallet that 
+      *     created the user contract. 
+      * @return address : The address of the user contract. 
+      */
+    function getUserContractAddress(address _userWallet)
+        public
+        view
+        returns(address)
+    {
+        return userWalletsToUserContracts[_userWallet];
+    }    
     /**
       * @dev This allows a new creator to be finalized and stored.
       * @notice The 'transaction fee' of a like (5 views) is taken 
