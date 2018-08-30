@@ -99,6 +99,6 @@ Wannabes moderaters will moderate already moderated content. Every time they mod
 This allows for content consumers to only view from creators who have been flagged as Safe or PG13 etc. This level of control can prevent disturbing content from polluting younger users but allows for much more freedom of speech than YouTube currently allows, enabling a much larger audience with a much more secure way of viewing safe content. 
 
 ### 2. Content Types
-    In future itterations I would like to unlimit the content types. Allowing videos, pictures, votes and polls, blogs, and anything        else I can think of. I want it to be a platform where everyone is included, the audience has control over what they do and do not        want to see without creating eco chambers, and there is no limit on conent. 
+In future itterations I would like to unlimit the content types. Allowing videos, pictures, votes and polls, blogs, and anything        else I can think of. I want it to be a platform where everyone is included, the audience has control over what they do and do not        want to see without creating eco chambers, and there is no limit on conent. 
     
 Thank you for your time.
